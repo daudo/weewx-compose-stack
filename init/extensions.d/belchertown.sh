@@ -110,9 +110,9 @@ configure_belchertown_options() {
         # Generate short name for manifest
         local MANIFEST_SHORT_NAME=$(generate_short_name "$WEEWX_LOCATION")
         
-        # Check if BelchertownReport section exists
-        if grep -q "\\[\\[BelchertownReport\\]\\]" /data/weewx.conf; then
-            echo "Found existing BelchertownReport section, configuring options..."
+        # Check if Belchertown section exists (created by extension installation)
+        if grep -q "\\[\\[Belchertown\\]\\]" /data/weewx.conf; then
+            echo "Found existing [[Belchertown]] section, configuring options..."
             
             # Create a temporary config section to append
             local TEMP_CONFIG="/tmp/belchertown_extras.conf"
@@ -126,20 +126,20 @@ configure_belchertown_options() {
             powered_by = "Observations are powered by $WEEWX_LOCATION"
 EOF
             
-            # Check if [[[Extras]]] section already exists
-            if grep -A 10 "\\[\\[BelchertownReport\\]\\]" /data/weewx.conf | grep -q "\\[\\[\\[Extras\\]\\]\\]"; then
-                echo "Updating existing [[[Extras]]] section..."
+            # Check if [[[Extras]]] section already exists in [[Belchertown]]
+            if grep -A 10 "\\[\\[Belchertown\\]\\]" /data/weewx.conf | grep -q "\\[\\[\\[Extras\\]\\]\\]"; then
+                echo "Updating existing [[[Extras]]] section in [[Belchertown]]..."
                 # Remove old Extras section and add new one
-                sed -i '/\\[\\[BelchertownReport\\]\\]/,/\\[\\[.*\\]\\]/ {
+                sed -i '/\\[\\[Belchertown\\]\\]/,/\\[\\[.*\\]\\]/ {
                     /\\[\\[\\[Extras\\]\\]\\]/,/^[[:space:]]*\\[\\[\\[/d
                 }' /data/weewx.conf
             fi
             
-            # Add the new Extras section
-            sed -i "/\\[\\[BelchertownReport\\]\\]/r $TEMP_CONFIG" /data/weewx.conf
+            # Add the new Extras section to [[Belchertown]]
+            sed -i "/\\[\\[Belchertown\\]\\]/r $TEMP_CONFIG" /data/weewx.conf
             rm -f "$TEMP_CONFIG"
             
-            echo "Belchertown configuration completed:"
+            echo "Belchertown skin configuration completed:"
             echo "  - site_title: $WEEWX_LOCATION"
             echo "  - manifest_name: $WEEWX_LOCATION"
             echo "  - manifest_short_name: $MANIFEST_SHORT_NAME"
@@ -147,7 +147,7 @@ EOF
             echo "  - footer_copyright_text: $WEEWX_LOCATION Website"
             echo "  - powered_by: Observations are powered by $WEEWX_LOCATION"
         else
-            echo "Warning: BelchertownReport section not found, skipping configuration"
+            echo "Warning: [[Belchertown]] section not found, skipping skin configuration"
         fi
     fi
 }
@@ -163,15 +163,15 @@ configure_belchertown_locale() {
         
         echo "Using auto-detection for better locale compatibility"
         
-        # Apply locale to existing [[[Extras]]] section if it exists
-        if grep -A 30 "\\[\\[BelchertownReport\\]\\]" /data/weewx.conf | grep -q "\\[\\[\\[Extras\\]\\]\\]"; then
-            if ! grep -A 30 "\\[\\[BelchertownReport\\]\\]" /data/weewx.conf | grep -q "belchertown_locale"; then
-                sed -i "/\\[\\[BelchertownReport\\]\\]/,/\\[\\[.*\\]\\]/ {
+        # Apply locale to existing [[[Extras]]] section if it exists in [[Belchertown]]
+        if grep -A 30 "\\[\\[Belchertown\\]\\]" /data/weewx.conf | grep -q "\\[\\[\\[Extras\\]\\]\\]"; then
+            if ! grep -A 30 "\\[\\[Belchertown\\]\\]" /data/weewx.conf | grep -q "belchertown_locale"; then
+                sed -i "/\\[\\[Belchertown\\]\\]/,/\\[\\[.*\\]\\]/ {
                     /\\[\\[\\[Extras\\]\\]\\]/a\\            belchertown_locale = $BELCHERTOWN_LOCALE
                 }" /data/weewx.conf
                 echo "Belchertown locale configuration added: $BELCHERTOWN_LOCALE"
             else
-                sed -i "/\\[\\[BelchertownReport\\]\\]/,/\\[\\[.*\\]\\]/ s|belchertown_locale.*=.*|            belchertown_locale = $BELCHERTOWN_LOCALE|g" /data/weewx.conf
+                sed -i "/\\[\\[Belchertown\\]\\]/,/\\[\\[.*\\]\\]/ s|belchertown_locale.*=.*|            belchertown_locale = $BELCHERTOWN_LOCALE|g" /data/weewx.conf
                 echo "Belchertown locale configuration updated: $BELCHERTOWN_LOCALE"
             fi
         fi
