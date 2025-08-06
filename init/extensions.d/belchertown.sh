@@ -102,88 +102,103 @@ generate_short_name() {
 }
 
 # Configure Belchertown skin options using environment variables
-if [ -f "/data/weewx.conf" ] && [ -n "$WEEWX_LOCATION" ]; then
-    echo "Configuring Belchertown skin options from environment variables..."
-    
-    # Generate short name for manifest
-    MANIFEST_SHORT_NAME=$(generate_short_name "$WEEWX_LOCATION")
-    
-    # Ensure BelchertownReport section exists (create if not)
-    if ! grep -q "\\[\\[BelchertownReport\\]\\]" /data/weewx.conf; then
-        # Add minimal BelchertownReport section 
-        sed -i "/\\[StdReport\\]/a\\    [[BelchertownReport]]\\
-\\        skin = Belchertown\\
-\\        enable = true\\
-" /data/weewx.conf
+# This runs after installation to avoid corrupting config during extension install
+configure_belchertown_options() {
+    if [ -f "/data/weewx.conf" ] && [ -n "$WEEWX_LOCATION" ]; then
+        echo "Configuring Belchertown skin options from environment variables..."
+        
+        # Generate short name for manifest
+        local MANIFEST_SHORT_NAME=$(generate_short_name "$WEEWX_LOCATION")
+        
+        # Check if BelchertownReport section exists
+        if grep -q "\\[\\[BelchertownReport\\]\\]" /data/weewx.conf; then
+            echo "Found existing BelchertownReport section, configuring options..."
+            
+            # Create a temporary config section to append
+            local TEMP_CONFIG="/tmp/belchertown_extras.conf"
+            cat > "$TEMP_CONFIG" << EOF
+        [[[Extras]]]
+            site_title = "$WEEWX_LOCATION"
+            manifest_name = "$WEEWX_LOCATION"
+            manifest_short_name = "$MANIFEST_SHORT_NAME"
+            home_page_header = "$WEEWX_LOCATION Website"
+            footer_copyright_text = "$WEEWX_LOCATION Website"
+            powered_by = "Observations are powered by $WEEWX_LOCATION"
+EOF
+            
+            # Check if [[[Extras]]] section already exists
+            if grep -A 10 "\\[\\[BelchertownReport\\]\\]" /data/weewx.conf | grep -q "\\[\\[\\[Extras\\]\\]\\]"; then
+                echo "Updating existing [[[Extras]]] section..."
+                # Remove old Extras section and add new one
+                sed -i '/\\[\\[BelchertownReport\\]\\]/,/\\[\\[.*\\]\\]/ {
+                    /\\[\\[\\[Extras\\]\\]\\]/,/^[[:space:]]*\\[\\[\\[/d
+                }' /data/weewx.conf
+            fi
+            
+            # Add the new Extras section
+            sed -i "/\\[\\[BelchertownReport\\]\\]/r $TEMP_CONFIG" /data/weewx.conf
+            rm -f "$TEMP_CONFIG"
+            
+            echo "Belchertown configuration completed:"
+            echo "  - site_title: $WEEWX_LOCATION"
+            echo "  - manifest_name: $WEEWX_LOCATION"
+            echo "  - manifest_short_name: $MANIFEST_SHORT_NAME"
+            echo "  - home_page_header: $WEEWX_LOCATION Website"
+            echo "  - footer_copyright_text: $WEEWX_LOCATION Website"
+            echo "  - powered_by: Observations are powered by $WEEWX_LOCATION"
+        else
+            echo "Warning: BelchertownReport section not found, skipping configuration"
+        fi
     fi
-    
-    # Add or update [[[Extras]]] section in BelchertownReport
-    if ! grep -A 20 "\\[\\[BelchertownReport\\]\\]" /data/weewx.conf | grep -q "\\[\\[\\[Extras\\]\\]\\]"; then
-        # Add [[[Extras]]] section
-        sed -i "/\\[\\[BelchertownReport\\]\\]/,/\\[\\[.*\\]\\]/ { 
-            /\\[\\[BelchertownReport\\]\\]/a\\        [[[Extras]]]
-        }" /data/weewx.conf
-    fi
-    
-    # Configure Belchertown options
-    echo "Setting site_title = $WEEWX_LOCATION"
-    sed -i "/\\[\\[BelchertownReport\\]\\]/,/\\[\\[.*\\]\\]/ {
-        /\\[\\[\\[Extras\\]\\]\\]/a\\            site_title = \"$WEEWX_LOCATION\"
-    }" /data/weewx.conf
-    
-    echo "Setting manifest_name = $WEEWX_LOCATION"
-    sed -i "/\\[\\[BelchertownReport\\]\\]/,/\\[\\[.*\\]\\]/ {
-        /site_title/a\\            manifest_name = \"$WEEWX_LOCATION\"
-    }" /data/weewx.conf
-    
-    echo "Setting manifest_short_name = $MANIFEST_SHORT_NAME"
-    sed -i "/\\[\\[BelchertownReport\\]\\]/,/\\[\\[.*\\]\\]/ {
-        /manifest_name/a\\            manifest_short_name = \"$MANIFEST_SHORT_NAME\"
-    }" /data/weewx.conf
-    
-    echo "Setting home_page_header = $WEEWX_LOCATION Website"
-    sed -i "/\\[\\[BelchertownReport\\]\\]/,/\\[\\[.*\\]\\]/ {
-        /manifest_short_name/a\\            home_page_header = \"$WEEWX_LOCATION Website\"
-    }" /data/weewx.conf
-    
-    echo "Setting footer_copyright_text = $WEEWX_LOCATION Website"
-    sed -i "/\\[\\[BelchertownReport\\]\\]/,/\\[\\[.*\\]\\]/ {
-        /home_page_header/a\\            footer_copyright_text = \"$WEEWX_LOCATION Website\"
-    }" /data/weewx.conf
-    
-    echo "Setting powered_by = Observations are powered by $WEEWX_LOCATION"
-    sed -i "/\\[\\[BelchertownReport\\]\\]/,/\\[\\[.*\\]\\]/ {
-        /footer_copyright_text/a\\            powered_by = \"Observations are powered by $WEEWX_LOCATION\"
-    }" /data/weewx.conf
-    
-    echo "Belchertown configuration completed:"
-    echo "  - site_title: $WEEWX_LOCATION"
-    echo "  - manifest_name: $WEEWX_LOCATION" 
-    echo "  - manifest_short_name: $MANIFEST_SHORT_NAME"
-    echo "  - home_page_header: $WEEWX_LOCATION Website"
-    echo "  - footer_copyright_text: $WEEWX_LOCATION Website"
-    echo "  - powered_by: Observations are powered by $WEEWX_LOCATION"
-fi
+}
 
 # Configure Belchertown locale if language is specified and weewx.conf exists
-if [ -n "$WEEWX_LANGUAGE" ] && [ "$WEEWX_LANGUAGE" != "en" ] && [ -f "/data/weewx.conf" ]; then
-    echo "Configuring Belchertown locale for language: $WEEWX_LANGUAGE"
-    
-    # Use 'auto' for better compatibility - let Belchertown auto-detect
-    # This avoids locale installation issues while still supporting internationalization
-    BELCHERTOWN_LOCALE="auto"
-    
-    echo "Using auto-detection for better locale compatibility"
-    
-    # Apply Belchertown locale configuration to BelchertownReport section
-    if grep -q "\\[\\[BelchertownReport\\]\\]" /data/weewx.conf; then
-        if ! grep -A 20 "\\[\\[BelchertownReport\\]\\]" /data/weewx.conf | grep -q "belchertown_locale"; then
-            sed -i "/\\[\\[BelchertownReport\\]\\]/,/\\[\\[.*\\]\\]/ {
-                /powered_by/a\\            belchertown_locale = $BELCHERTOWN_LOCALE
-            }" /data/weewx.conf
-        else
-            sed -i "/\\[\\[BelchertownReport\\]\\]/,/\\[\\[.*\\]\\]/ s|belchertown_locale.*=.*|            belchertown_locale = $BELCHERTOWN_LOCALE|g" /data/weewx.conf
+configure_belchertown_locale() {
+    if [ -n "$WEEWX_LANGUAGE" ] && [ "$WEEWX_LANGUAGE" != "en" ] && [ -f "/data/weewx.conf" ]; then
+        echo "Configuring Belchertown locale for language: $WEEWX_LANGUAGE"
+        
+        # Use 'auto' for better compatibility - let Belchertown auto-detect
+        # This avoids locale installation issues while still supporting internationalization
+        local BELCHERTOWN_LOCALE="auto"
+        
+        echo "Using auto-detection for better locale compatibility"
+        
+        # Apply locale to existing [[[Extras]]] section if it exists
+        if grep -A 30 "\\[\\[BelchertownReport\\]\\]" /data/weewx.conf | grep -q "\\[\\[\\[Extras\\]\\]\\]"; then
+            if ! grep -A 30 "\\[\\[BelchertownReport\\]\\]" /data/weewx.conf | grep -q "belchertown_locale"; then
+                sed -i "/\\[\\[BelchertownReport\\]\\]/,/\\[\\[.*\\]\\]/ {
+                    /\\[\\[\\[Extras\\]\\]\\]/a\\            belchertown_locale = $BELCHERTOWN_LOCALE
+                }" /data/weewx.conf
+                echo "Belchertown locale configuration added: $BELCHERTOWN_LOCALE"
+            else
+                sed -i "/\\[\\[BelchertownReport\\]\\]/,/\\[\\[.*\\]\\]/ s|belchertown_locale.*=.*|            belchertown_locale = $BELCHERTOWN_LOCALE|g" /data/weewx.conf
+                echo "Belchertown locale configuration updated: $BELCHERTOWN_LOCALE"
+            fi
         fi
-        echo "Belchertown locale configuration applied: $BELCHERTOWN_LOCALE"
+    fi
+}
+
+# Run all configuration functions after installation
+echo "Applying post-installation configuration..."
+
+# Configure skin switching (if needed)
+# Note: This happens during installation above
+
+# Configure Belchertown options from environment variables
+configure_belchertown_options
+
+# Configure locale settings
+configure_belchertown_locale
+
+# Validate final configuration
+echo "Validating final configuration..."
+if weectl extension list --config=/data/weewx.conf >/dev/null 2>&1; then
+    echo "Configuration validation successful"
+else
+    echo "Warning: Configuration validation failed - there may be syntax errors"
+    # Try to restore from backup if validation fails
+    source /init/backup-config.sh
+    if manage_backups restore; then
+        echo "Configuration restored from backup after validation failure"
     fi
 fi
