@@ -2,9 +2,9 @@
 # Python 3.13 Compatibility Functions
 # This file provides reusable functions to fix Python 3.13 compatibility issues
 
-# Fix locale.format() compatibility issues in a given Python file
-# Usage: fix_locale_format_compatibility "/path/to/file.py" "Extension Name"
-fix_locale_format_compatibility() {
+# Apply Python 3.13 locale.format monkey-patch to a Python file
+# Usage: apply_locale_format_monkeypatch "/path/to/file.py" "Extension Name"
+apply_locale_format_monkeypatch() {
     local python_file="$1"
     local extension_name="${2:-Extension}"
     
@@ -13,8 +13,15 @@ fix_locale_format_compatibility() {
         return 1
     fi
     
+    # Check if monkey-patch is already applied
+    if grep -q "locale.format = locale.format_string" "$python_file"; then
+        echo "$extension_name already has Python 3.13 locale.format monkey-patch"
+        return 0
+    fi
+    
+    # Check if file uses locale.format (to see if patch is needed)
     if grep -q "locale.format" "$python_file"; then
-        echo "Applying Python 3.13 compatibility fixes to $extension_name..."
+        echo "Applying Python 3.13 locale.format monkey-patch to $extension_name..."
         
         # Create backup with unique suffix
         local backup_file="${python_file}.py313backup"
@@ -23,21 +30,19 @@ fix_locale_format_compatibility() {
             echo "Created backup: $(basename "$backup_file")"
         fi
         
-        # Replace locale.format() patterns with modern format() equivalents
-        sed -i 's/locale\.format("%.1f", 0)/format(0, ".1f")/g' "$python_file"
-        sed -i 's/locale\.format("%.0f", \([^)]*\))/format(\1, ".0f")/g' "$python_file"
-        sed -i 's/locale\.format("%.1f", \([^)]*\))/format(\1, ".1f")/g' "$python_file"
-        sed -i 's/locale\.format("%.2f", \([^)]*\))/format(\1, ".2f")/g' "$python_file"
-        sed -i 's/locale\.format("%d", \([^)]*\))/format(\1, "d")/g' "$python_file"
-        
-        # Verify the fix was applied
-        if ! grep -q "locale.format" "$python_file"; then
-            echo "Python 3.13 compatibility fixes applied successfully to $extension_name"
+        # Add monkey-patch at the top of the file after any existing imports
+        # First, check if locale is already imported
+        if grep -q "^import locale" "$python_file"; then
+            # Add monkey-patch after existing locale import
+            sed -i '/^import locale/a locale.format = locale.format_string  # Python 3.13 compatibility' "$python_file"
         else
-            echo "Warning: Some locale.format() patterns may remain in $extension_name"
+            # Add import and monkey-patch at the beginning
+            sed -i '1i import locale\nlocale.format = locale.format_string  # Python 3.13 compatibility\n' "$python_file"
         fi
+        
+        echo "Python 3.13 locale.format monkey-patch applied to $extension_name"
     else
-        echo "$extension_name is already compatible with Python 3.13"
+        echo "$extension_name does not use locale.format - no patch needed"
     fi
     
     return 0

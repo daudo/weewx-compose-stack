@@ -46,17 +46,17 @@ if [ -z "$INSTALLED_BELCHERTOWN_VERSION" ]; then
         return 1 2>/dev/null || exit 1
     fi
     
-    # Apply Python 3.13 compatibility fix using reusable function
+    # Apply Python 3.13 locale.format monkey-patch
     source /init/python313-compat.sh
-    fix_locale_format_compatibility "/data/bin/user/belchertown.py" "Belchertown"
+    apply_locale_format_monkeypatch "/data/bin/user/belchertown.py" "Belchertown"
     
     echo "Belchertown skin v$BELCHERTOWN_VERSION installed successfully"
 else
     echo "Belchertown skin v$BELCHERTOWN_VERSION already installed"
     
-    # Apply Python 3.13 fix even if already installed
+    # Apply Python 3.13 locale.format monkey-patch even if already installed
     source /init/python313-compat.sh
-    fix_locale_format_compatibility "/data/bin/user/belchertown.py" "Belchertown"
+    apply_locale_format_monkeypatch "/data/bin/user/belchertown.py" "Belchertown"
 fi
 
 # Configure Belchertown locale if language is specified and weewx.conf exists
