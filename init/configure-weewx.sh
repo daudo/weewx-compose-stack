@@ -3,6 +3,10 @@ set -e
 
 echo "=== WeeWX Configuration Setup ==="
 
+# Create initial backup before any changes
+source /init/backup-config.sh
+manage_backups init
+
 # Check if weewx.conf already exists
 if [ ! -f /data/weewx.conf ]; then
     echo "Creating initial WeeWX configuration..."
@@ -84,14 +88,41 @@ else
 fi
 
 # Configure active skin for web reports
-if [ -n "$WEEWX_SKIN" ]; then
-    echo "Setting active skin: $WEEWX_SKIN"
-    # Update the skin setting in the [StdReport] [[StandardReport]] section
-    if grep -q "\\[\\[StandardReport\\]\\]" /data/weewx.conf; then
-        sed -i "/\\[\\[StandardReport\\]\\]/,/\\[\\[\\[.*\\]\\]\\]/ s|^[[:space:]]*skin[[:space:]]*=.*|        skin = $WEEWX_SKIN|" /data/weewx.conf
+if [ -n "$WEEWX_SKIN" ] && [ "$WEEWX_SKIN" != "Seasons" ]; then
+    echo "Setting up skin configuration for: $WEEWX_SKIN"
+    
+    if [ "$WEEWX_SKIN" = "Belchertown" ]; then
+        echo "Configuring Belchertown as default skin with Seasons in subfolder..."
+        
+        # Check if BelchertownReport section already exists
+        if ! grep -q "\\[\\[BelchertownReport\\]\\]" /data/weewx.conf; then
+            # Add BelchertownReport section before SeasonsReport
+            sed -i "/\\[\\[SeasonsReport\\]\\]/i\\    # Belchertown as the main weather website\\
+\\    [[BelchertownReport]]\\
+\\        skin = Belchertown\\
+\\        enable = true\\
+\\        # Generates to public_html/ (main website root)\\
+\\
+" /data/weewx.conf
+        else
+            # Ensure BelchertownReport is enabled
+            sed -i "/\\[\\[BelchertownReport\\]\\]/,/\\[\\[.*\\]\\]/ s|^[[:space:]]*enable[[:space:]]*=.*|        enable = true|" /data/weewx.conf
+        fi
+        
+        # Move Seasons to subfolder
+        if grep -A 10 "\\[\\[SeasonsReport\\]\\]" /data/weewx.conf | grep -q "HTML_ROOT"; then
+            sed -i "/\\[\\[SeasonsReport\\]\\]/,/\\[\\[.*\\]\\]/ s|^[[:space:]]*HTML_ROOT[[:space:]]*=.*|        HTML_ROOT = public_html/seasons|" /data/weewx.conf
+        else
+            # Add HTML_ROOT setting to SeasonsReport
+            sed -i "/\\[\\[SeasonsReport\\]\\]/a\\        HTML_ROOT = public_html/seasons" /data/weewx.conf
+        fi
+        
+        echo "Belchertown configured as main skin, Seasons available at /seasons/"
     else
-        echo "Warning: StandardReport section not found in weewx.conf"
+        echo "Warning: Skin '$WEEWX_SKIN' configuration not implemented"
     fi
+elif [ -n "$WEEWX_SKIN" ] && [ "$WEEWX_SKIN" = "Seasons" ]; then
+    echo "Using default Seasons skin configuration"
 fi
 
 echo "Station configuration updated successfully"

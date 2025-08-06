@@ -55,6 +55,11 @@ echo "=========================================="
 echo "Extension installation completed!"
 echo "=========================================="
 
+# Clean up excess backup files created during extension installations
+echo "Cleaning up backup files..."
+source /init/backup-config.sh
+manage_backups cleanup
+
 # Display summary of installed extensions
 if command -v weectl >/dev/null 2>&1; then
     echo "Installed extensions:"

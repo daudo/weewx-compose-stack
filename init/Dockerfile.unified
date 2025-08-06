@@ -4,9 +4,15 @@ FROM felddy/weewx:5
 # Switch to root to modify permissions and create directories
 USER root
 
-# Install required tools for extension installation
+# Install required tools and locales for extension installation
 RUN apt-get update && \
-    apt-get install -y wget && \
+    apt-get install -y wget locales && \
+    # Generate common locales for Belchertown skin
+    sed -i '/^# *de_DE.UTF-8/s/^# *//' /etc/locale.gen && \
+    sed -i '/^# *fr_FR.UTF-8/s/^# *//' /etc/locale.gen && \
+    sed -i '/^# *es_ES.UTF-8/s/^# *//' /etc/locale.gen && \
+    sed -i '/^# *it_IT.UTF-8/s/^# *//' /etc/locale.gen && \
+    locale-gen && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -19,6 +25,7 @@ COPY --chmod=755 init/configure-weewx.sh /init/configure-weewx.sh
 COPY --chmod=755 init/install-gw1000.sh /init/install-gw1000.sh
 COPY --chmod=755 init/install-extensions.sh /init/install-extensions.sh
 COPY --chmod=755 init/setup-nginx.sh /init/setup-nginx.sh
+COPY --chmod=755 init/backup-config.sh /init/backup-config.sh
 COPY --chmod=755 init/init-weewx-unified.sh /init/init-weewx-unified.sh
 
 # Copy extension scripts directory
