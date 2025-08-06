@@ -16,6 +16,34 @@ fi
 
 echo "Processing Inigo extension (weeWXWeatherApp support)..."
 
+# Function to validate weewx.conf before proceeding
+validate_config() {
+    if ! weectl extension list --config=/data/weewx.conf >/dev/null 2>&1; then
+        echo "Error: weewx.conf appears to be corrupted. Checking for backup..."
+        
+        # Look for recent backup files
+        BACKUP_FILE=$(ls -t /data/weewx.conf.* 2>/dev/null | head -1)
+        if [ -n "$BACKUP_FILE" ]; then
+            echo "Found backup file: $BACKUP_FILE"
+            echo "Restoring from backup..."
+            cp "$BACKUP_FILE" /data/weewx.conf
+            
+            # Test the restored config
+            if weectl extension list --config=/data/weewx.conf >/dev/null 2>&1; then
+                echo "Config restored successfully from backup"
+                return 0
+            else
+                echo "Error: Backup config is also corrupted"
+                return 1
+            fi
+        else
+            echo "Error: No backup config file found"
+            return 1
+        fi
+    fi
+    return 0
+}
+
 # Function to check if extension is installed and get version
 check_extension_version() {
     local extension_name=$1
@@ -26,6 +54,12 @@ check_extension_version() {
 UNIT_SYSTEM="metric"
 if [ "${WEEWX_UNIT_SYSTEM}" = "us" ]; then
     UNIT_SYSTEM="imperial"
+fi
+
+# Validate config before proceeding
+if ! validate_config; then
+    echo "Error: Cannot proceed with corrupted config file"
+    return 1 2>/dev/null || exit 1
 fi
 
 # Check current installation status
@@ -43,24 +77,45 @@ if [ -z "$INSTALLED_INIGO_VERSION" ]; then
     echo "Installing Inigo extension v$INIGO_VERSION ($UNIT_SYSTEM units)..."
     INIGO_URL="https://github.com/evilbunny2008/weeWXWeatherApp/releases/download/${INIGO_VERSION}/inigo-${UNIT_SYSTEM}.tar.gz"
     
-    # Download and install extension
-    wget -q -O "/tmp/inigo-${UNIT_SYSTEM}.tar.gz" "$INIGO_URL"
-    weectl extension install "/tmp/inigo-${UNIT_SYSTEM}.tar.gz" --config=/data/weewx.conf --yes
-    rm "/tmp/inigo-${UNIT_SYSTEM}.tar.gz"
+    # Install extension directly from URL
+    echo "Installing from: $INIGO_URL"
+    weectl extension install "$INIGO_URL" --config=/data/weewx.conf --yes
     
-    # Download and install settings file
-    echo "Installing Inigo settings file..."
-    SETTINGS_URL="https://github.com/evilbunny2008/weeWXWeatherApp/releases/download/${INIGO_VERSION}/inigo-settings.txt"
-    wget -q -O "/tmp/inigo-settings.txt" "$SETTINGS_URL"
-    
-    # Copy settings to web-accessible location
-    mkdir -p /data/public_html
-    cp "/tmp/inigo-settings.txt" "/data/public_html/inigo-settings.txt"
-    rm "/tmp/inigo-settings.txt"
+    # Create Inigo settings file configured from environment variables
+    echo "Setting up Inigo settings file for Android app access..."
+    if mkdir -p /data/public_html; then
+        # Use environment variables with defaults
+        STATION_NAME="${WEEWX_LOCATION:-My Weather Station}"
+        STATION_LATITUDE="${WEEWX_LATITUDE:-0.0}"
+        STATION_LONGITUDE="${WEEWX_LONGITUDE:-0.0}"
+        
+        echo "Creating inigo-settings.txt with station configuration..."
+        cat > "/data/public_html/inigo-settings.txt" << EOF
+# Inigo Settings File - Configured automatically from environment variables
+# Station identification
+station_name=${STATION_NAME}
+latitude=${STATION_LATITUDE}
+longitude=${STATION_LONGITUDE}
+
+# Data source (points to WeeWX-generated inigo-data.txt)
+data=inigo-data.txt
+
+# Additional settings can be added here as needed
+# See: https://github.com/evilbunny2008/weeWXWeatherApp/wiki/InigoSettings.txt
+EOF
+        echo "Settings file created at /data/public_html/inigo-settings.txt"
+        echo "Station: ${STATION_NAME} (${STATION_LATITUDE}, ${STATION_LONGITUDE})"
+    else
+        echo "Warning: Could not create /data/public_html directory"
+    fi
     
     # Install pyephem for enhanced almanac data (optional but recommended)
     echo "Installing pyephem for enhanced almanac support..."
-    pip3 install pyephem --target /data/lib/python/site-packages --quiet || echo "Warning: pyephem installation failed, continuing..."
+    if pip3 install pyephem --target /data/lib/python/site-packages --quiet; then
+        echo "pyephem installed successfully"
+    else
+        echo "Warning: pyephem installation failed, continuing..."
+    fi
     
     echo "Inigo extension v$INIGO_VERSION installed successfully"
 else
