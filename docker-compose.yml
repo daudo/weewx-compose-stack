@@ -1,0 +1,59 @@
+---
+name: "weewx"
+
+volumes:
+  weewx_data:
+
+services:
+  # Unified initialization: Create weewx.conf, install GW1000 driver and nginx configuration
+  weewx-init:
+    build:
+      context: .
+      dockerfile: init/Dockerfile.unified
+    volumes:
+      - weewx_data:/data
+    environment:
+      - PATH=/opt/venv/bin:/usr/local/bin:/usr/bin:/bin
+      - PIP_TARGET=/data/lib/python/site-packages
+      - PYTHONPATH=/data/lib/python/site-packages
+      - WEEWX_LOCATION=${WEEWX_LOCATION:-My Cosy Weather Station}
+      - WEEWX_LATITUDE=${WEEWX_LATITUDE:-42.2627}
+      - WEEWX_LONGITUDE=${WEEWX_LONGITUDE:-11.3945}
+      - "WEEWX_ALTITUDE=${WEEWX_ALTITUDE:-587, meter}"
+      - WEEWX_STATION_URL=${WEEWX_STATION_URL:-}
+      - WEEWX_RAIN_YEAR_START=${WEEWX_RAIN_YEAR_START:-1}
+      - WEEWX_WEEK_START=${WEEWX_WEEK_START:-0}
+      - WEEWX_UNIT_SYSTEM=${WEEWX_UNIT_SYSTEM:-metric}
+      - GW1000_IP=${GW1000_IP:-192.168.1.10}
+    restart: "no"
+    # This container handles all initialization: weewx.conf, GW1000 driver, and nginx config
+
+  # Run WeeWX normally
+  weewx:
+    image: felddy/weewx:5
+    depends_on:
+      weewx-init:
+        condition: service_completed_successfully
+    volumes:
+      - weewx_data:/data
+    environment:
+      - GW1000_IP=${GW1000_IP:-192.168.1.10}
+    restart: unless-stopped
+
+  # Nginx web server to serve WeeWX web content
+  nginx:
+    image: nginx:alpine
+    depends_on:
+      - weewx
+      - weewx-init  # Ensure nginx config is available
+    ports:
+      - "${NGINX_PORT:-8080}:80"
+    volumes:
+      - weewx_data:/data:ro
+    command: >
+      sh -c "
+        cp /data/nginx/nginx.conf /etc/nginx/nginx.conf &&
+        exec nginx -g 'daemon off;'
+      "
+    restart: unless-stopped
+    # Copies nginx.conf from shared volume to expected location on startup
