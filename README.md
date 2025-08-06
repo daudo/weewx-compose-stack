@@ -50,7 +50,7 @@ The system will automatically apply your new environment variables to the WeeWX 
 
 ### For Standard WeeWX Users
 
-If you need only basic WeeWX without the additional services (nginx, GW1000 driver, environment configuration), use the upstream [felddy/weewx-docker](https://github.com/felddy/weewx-docker) repository directly.
+If you need only basic WeeWX without the additional services (nginx, GW1000 driver, environment configuration), use the base image [felddy/weewx-docker](https://github.com/felddy/weewx-docker) repository directly.
 
 ## Architecture
 
@@ -86,7 +86,6 @@ This Docker Compose stack provides a 3-container architecture with unified initi
 ## Documentation
 
 - **[README-PORTAINER.md](README-PORTAINER.md)** - Complete Portainer deployment guide
-- **[Original README](https://github.com/felddy/weewx-docker/blob/develop/README.md)** - Original project documentation
 
 ## Comparison with Base WeeWX Docker
 
@@ -110,11 +109,11 @@ Contributions should focus on:
 - Docker Compose orchestration improvements
 - Environment variable configuration enhancements
 
-For improvements to the base WeeWX container, please contribute to the upstream repository: <https://github.com/felddy/weewx-docker>
+For improvements to the base WeeWX container, please contribute to the base image repository: <https://github.com/felddy/weewx-docker>
 
 ## Automatic Updates
 
-This stack benefits from upstream improvements automatically:
+This stack benefits from base image improvements automatically:
 
 - WeeWX version updates
 - Security patches
@@ -124,11 +123,11 @@ Simply pull the latest `felddy/weewx:5` image to get updates.
 
 ## License
 
-This project is released as open source under the [MIT license](LICENSE), same as the upstream project.
+This project is released as open source under the [MIT license](LICENSE).
 
 ## Support
 
 - **Stack Issues**: Check [README-PORTAINER.md](README-PORTAINER.md) troubleshooting section  
 - **EcoWitt/GW1000 Issues**: Hardware-specific problems with weather station drivers
 - **General WeeWX Issues**: Consult [WeeWX documentation](https://weewx.com/docs/) and forums
-- **Base Container Issues**: Report to [upstream repository](https://github.com/felddy/weewx-docker/issues)
+- **Base Container Issues**: Report to [base image repository](https://github.com/felddy/weewx-docker/issues)
