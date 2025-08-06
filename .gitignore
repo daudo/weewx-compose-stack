@@ -9,6 +9,7 @@ __pycache__
 .python-version
 *.egg-info
 venv
+failures/
 
 ## VS Code ##
 .vscode
