@@ -1,10 +1,10 @@
 # WeeWX Docker Compose Stack 🌩🐳
 
-A production-ready Docker Compose stack for [WeeWX](http://weewx.com) weather stations with nginx web serving, EcoWitt GW1000 driver integration, and Portainer compatibility.
+A nice little Docker Compose stack for [WeeWX](http://weewx.com) weather stations with nginx web serving, EcoWitt GW1000 driver integration, and Portainer compatibility.
 
-> **🐳 Built on**: [felddy/weewx-docker](https://github.com/felddy/weewx-docker) - Containerized WeeWX weather station software
->
-> **🎯 Purpose**: Easy deployment of WeeWX with modern orchestration, web interface, and EcoWitt weather station support
+Built on: [felddy/weewx-docker](https://github.com/felddy/weewx-docker) - Containerized WeeWX weather station software
+
+Purpose: Easy deployment of WeeWX with modern orchestration, web interface, and EcoWitt weather station support
 
 ## Features
 
