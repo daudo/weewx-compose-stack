@@ -212,7 +212,7 @@ The GW1000 driver (`gw1000/gw1000.py`) was obtained from the backup repository:
 git clone https://github.com/hoetzgit/weewx-gw1000.git
 
 # Copy the driver file
-cp weewx-gw1000/bin/user/gw1000.py /path/to/weewx-docker/gw1000/
+cp weewx-gw1000/bin/user/gw1000.py /path/to/weewx-compose-stack/gw1000/
 ```
 
 The driver is automatically installed by the `weewx-init` container during stack deployment.

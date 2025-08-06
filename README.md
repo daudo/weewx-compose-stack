@@ -16,7 +16,7 @@ This Docker Compose stack provides:
 - **Environment Configuration**: Full station configuration via environment variables (location, coordinates, altitude, etc.)
 - **Unified Initialization**: Streamlined setup process with modular scripts
 
-The primary intention of this project is to make the collected data available on a self-hosted website. I personally have no interest in uploading the data to ‘the cloud’, regardless of the provider, which is why this fork is primarily concerned with purely local operation. For my use case, ‘local operation’ means that I run WeeWX with portainer, see [README-PORTAINER.md](README-PORTAINER.md) for more details.
+The primary intention of this project is to make the collected data available on a self-hosted website. I personally have no interest in uploading the data to "the cloud", regardless of the provider, which is why this project is primarily concerned with purely local operation. For my use case, "local operation" means that I run WeeWX with portainer, see [README-PORTAINER.md](README-PORTAINER.md) for more details.
 
 ## Quick Start
 
@@ -123,7 +123,12 @@ Simply pull the latest `felddy/weewx:5` image to get updates.
 
 ## License
 
-This project is released as open source under the [MIT license](LICENSE).
+Except for the GW1000 driver, this project is released as open source under the [MIT license](LICENSE).
+
+All contributions to this project will be released under the same MIT license. By submitting a pull request, you are agreeing to comply with this waiver of copyright interest.
+
+The GW1000 driver in the [gw1000 subdirectory](./gw1000/) is copyrighted (C) 2020-2024 Gary Roderick and licensed under
+the terms of the GNU General Public License as published by the Free Software Foundation.
 
 ## Support
 
