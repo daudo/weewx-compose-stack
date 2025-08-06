@@ -83,4 +83,15 @@ else
     sed -i '/^\\[Station\\]/,/^\\[.*\\]/ s|^[[:space:]]*station_url[[:space:]]*=.*|#    station_url = https://www.example.com|' /data/weewx.conf
 fi
 
+# Configure active skin for web reports
+if [ -n "$WEEWX_SKIN" ]; then
+    echo "Setting active skin: $WEEWX_SKIN"
+    # Update the skin setting in the [StdReport] [[StandardReport]] section
+    if grep -q "\\[\\[StandardReport\\]\\]" /data/weewx.conf; then
+        sed -i "/\\[\\[StandardReport\\]\\]/,/\\[\\[\\[.*\\]\\]\\]/ s|^[[:space:]]*skin[[:space:]]*=.*|        skin = $WEEWX_SKIN|" /data/weewx.conf
+    else
+        echo "Warning: StandardReport section not found in weewx.conf"
+    fi
+fi
+
 echo "Station configuration updated successfully"
