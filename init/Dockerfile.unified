@@ -4,6 +4,12 @@ FROM felddy/weewx:5
 # Switch to root to modify permissions and create directories
 USER root
 
+# Install required tools for extension installation
+RUN apt-get update && \
+    apt-get install -y wget && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # Copy source files needed for installation
 COPY gw1000/gw1000.py /tmp/gw1000.py
 COPY nginx/nginx.conf /tmp/nginx.conf

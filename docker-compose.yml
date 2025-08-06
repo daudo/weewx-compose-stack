@@ -24,7 +24,13 @@ services:
       - WEEWX_RAIN_YEAR_START=${WEEWX_RAIN_YEAR_START:-1}
       - WEEWX_WEEK_START=${WEEWX_WEEK_START:-0}
       - WEEWX_UNIT_SYSTEM=${WEEWX_UNIT_SYSTEM:-metric}
+      - WEEWX_LANGUAGE=${WEEWX_LANGUAGE:-en}
       - GW1000_IP=${GW1000_IP:-192.168.1.10}
+      # Extension configuration
+      - ENABLE_INIGO_EXTENSION=${ENABLE_INIGO_EXTENSION:-true}
+      - INIGO_VERSION=${INIGO_VERSION:-1.0.17}
+      - ENABLE_BELCHERTOWN_SKIN=${ENABLE_BELCHERTOWN_SKIN:-true}
+      - BELCHERTOWN_VERSION=${BELCHERTOWN_VERSION:-1.3.1}
     restart: "no"
     # This container handles all initialization: weewx.conf, GW1000 driver, and nginx config
 
