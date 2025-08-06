@@ -11,8 +11,27 @@ if [ ! -f /data/weewx.conf ]; then
 
     echo "Creating initial WeeWX configuration using original entrypoint..."
     /home/weewx/entrypoint.sh
+    
+    echo "Adding missing root paths for extension support..."
+    # Add WEEWX_ROOT and USER_ROOT to the config for extension installation
+    cat >> /data/weewx.conf << EOF
+
+# Root paths for extension installation (added by init container)
+WEEWX_ROOT = /data
+USER_ROOT = bin/user
+EOF
 else
     echo "WeeWX configuration exists, updating from environment variables..."
+    # Ensure root paths are present for extension installation
+    if ! grep -q "^WEEWX_ROOT" /data/weewx.conf; then
+        echo "Adding missing WEEWX_ROOT and USER_ROOT for extension support..."
+        cat >> /data/weewx.conf << EOF
+
+# Root paths for extension installation (added by init container)
+WEEWX_ROOT = /data
+USER_ROOT = bin/user
+EOF
+    fi
 fi
 
 echo "Configuring WeeWX station settings from environment variables..."

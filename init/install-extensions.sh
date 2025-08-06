@@ -58,7 +58,7 @@ echo "=========================================="
 # Display summary of installed extensions
 if command -v weectl >/dev/null 2>&1; then
     echo "Installed extensions:"
-    weectl extension list || echo "  Unable to list extensions"
+    weectl extension list --config=/data/weewx.conf || echo "  Unable to list extensions"
 else
     echo "  WeeWX tools not available for extension listing"
 fi

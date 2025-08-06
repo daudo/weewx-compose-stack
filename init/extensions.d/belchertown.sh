@@ -19,7 +19,7 @@ echo "Processing Belchertown skin..."
 # Function to check if extension is installed and get version
 check_extension_version() {
     local extension_name=$1
-    weectl extension list 2>/dev/null | grep "^${extension_name}" | awk '{print $2}' || echo ""
+    weectl extension list --config=/data/weewx.conf 2>/dev/null | grep "^${extension_name}" | awk '{print $2}' || echo ""
 }
 
 # Check current installation status
@@ -28,7 +28,7 @@ INSTALLED_BELCHERTOWN_VERSION=$(check_extension_version "Belchertown")
 # Handle version updates
 if [ -n "$INSTALLED_BELCHERTOWN_VERSION" ] && [ "$INSTALLED_BELCHERTOWN_VERSION" != "$BELCHERTOWN_VERSION" ]; then
     echo "Updating Belchertown skin: $INSTALLED_BELCHERTOWN_VERSION → $BELCHERTOWN_VERSION"
-    weectl extension uninstall Belchertown --yes
+    weectl extension uninstall Belchertown --config=/data/weewx.conf --yes
     INSTALLED_BELCHERTOWN_VERSION=""
 fi
 
@@ -39,7 +39,7 @@ if [ -z "$INSTALLED_BELCHERTOWN_VERSION" ]; then
     
     # Download and install extension
     wget -q -O "/tmp/weewx-belchertown-${BELCHERTOWN_VERSION}.tar.gz" "$BELCHERTOWN_URL"
-    weectl extension install "/tmp/weewx-belchertown-${BELCHERTOWN_VERSION}.tar.gz" --yes
+    weectl extension install "/tmp/weewx-belchertown-${BELCHERTOWN_VERSION}.tar.gz" --config=/data/weewx.conf --yes
     rm "/tmp/weewx-belchertown-${BELCHERTOWN_VERSION}.tar.gz"
     
     echo "Belchertown skin v$BELCHERTOWN_VERSION installed successfully"

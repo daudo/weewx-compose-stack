@@ -19,7 +19,7 @@ echo "Processing Inigo extension (weeWXWeatherApp support)..."
 # Function to check if extension is installed and get version
 check_extension_version() {
     local extension_name=$1
-    weectl extension list 2>/dev/null | grep "^${extension_name}" | awk '{print $2}' || echo ""
+    weectl extension list --config=/data/weewx.conf 2>/dev/null | grep "^${extension_name}" | awk '{print $2}' || echo ""
 }
 
 # Determine unit system for Inigo extension
@@ -34,7 +34,7 @@ INSTALLED_INIGO_VERSION=$(check_extension_version "inigo")
 # Handle version updates
 if [ -n "$INSTALLED_INIGO_VERSION" ] && [ "$INSTALLED_INIGO_VERSION" != "$INIGO_VERSION" ]; then
     echo "Updating Inigo extension: $INSTALLED_INIGO_VERSION → $INIGO_VERSION"
-    weectl extension uninstall inigo --yes
+    weectl extension uninstall inigo --config=/data/weewx.conf --yes
     INSTALLED_INIGO_VERSION=""
 fi
 
@@ -45,7 +45,7 @@ if [ -z "$INSTALLED_INIGO_VERSION" ]; then
     
     # Download and install extension
     wget -q -O "/tmp/inigo-${UNIT_SYSTEM}.tar.gz" "$INIGO_URL"
-    weectl extension install "/tmp/inigo-${UNIT_SYSTEM}.tar.gz" --yes
+    weectl extension install "/tmp/inigo-${UNIT_SYSTEM}.tar.gz" --config=/data/weewx.conf --yes
     rm "/tmp/inigo-${UNIT_SYSTEM}.tar.gz"
     
     # Download and install settings file
