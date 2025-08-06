@@ -55,14 +55,11 @@ fi
 if [ -n "$WEEWX_LANGUAGE" ] && [ "$WEEWX_LANGUAGE" != "en" ] && [ -f "/data/weewx.conf" ]; then
     echo "Configuring Belchertown locale for language: $WEEWX_LANGUAGE"
     
-    # Set belchertown_locale based on language (simple mapping for common cases)
-    case "$WEEWX_LANGUAGE" in
-        "de") BELCHERTOWN_LOCALE="de_DE.UTF-8" ;;
-        "fr") BELCHERTOWN_LOCALE="fr_FR.UTF-8" ;;
-        "es") BELCHERTOWN_LOCALE="es_ES.UTF-8" ;;
-        "it") BELCHERTOWN_LOCALE="it_IT.UTF-8" ;;
-        *) BELCHERTOWN_LOCALE="auto" ;;
-    esac
+    # Use 'auto' for better compatibility - let Belchertown auto-detect
+    # This avoids locale installation issues while still supporting internationalization
+    BELCHERTOWN_LOCALE="auto"
+    
+    echo "Using auto-detection for better locale compatibility"
     
     # Apply Belchertown locale configuration
     if grep -q "\[\[Belchertown\]\]" /data/weewx.conf; then
