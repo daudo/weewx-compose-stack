@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Indigo Extension Installation Script (for weeWXWeatherApp support)
+# Inigo Extension Installation Script (for weeWXWeatherApp support)
 # This script installs the Inigo extension that provides data API for the weeWXWeatherApp Android application
 
 # Set default values
@@ -19,25 +19,13 @@ echo "Processing Inigo extension (weeWXWeatherApp support)..."
 # Function to validate weewx.conf before proceeding
 validate_config() {
     if ! weectl extension list --config=/data/weewx.conf >/dev/null 2>&1; then
-        echo "Error: weewx.conf appears to be corrupted. Checking for backup..."
-        
-        # Look for recent backup files
-        BACKUP_FILE=$(ls -t /data/weewx.conf.* 2>/dev/null | head -1)
-        if [ -n "$BACKUP_FILE" ]; then
-            echo "Found backup file: $BACKUP_FILE"
-            echo "Restoring from backup..."
-            cp "$BACKUP_FILE" /data/weewx.conf
-            
-            # Test the restored config
-            if weectl extension list --config=/data/weewx.conf >/dev/null 2>&1; then
-                echo "Config restored successfully from backup"
-                return 0
-            else
-                echo "Error: Backup config is also corrupted"
-                return 1
-            fi
+        echo "Error: weewx.conf appears to be corrupted. Attempting restore..."
+        source /init/backup-config.sh
+        if manage_backups restore; then
+            echo "Config restored successfully from backup"
+            return 0
         else
-            echo "Error: No backup config file found"
+            echo "Error: Unable to restore config from backup"
             return 1
         fi
     fi
