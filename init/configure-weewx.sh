@@ -87,42 +87,6 @@ else
     sed -i '/^\\[Station\\]/,/^\\[.*\\]/ s|^[[:space:]]*station_url[[:space:]]*=.*|#    station_url = https://www.example.com|' /data/weewx.conf
 fi
 
-# Configure active skin for web reports
-if [ -n "$WEEWX_SKIN" ] && [ "$WEEWX_SKIN" != "Seasons" ]; then
-    echo "Setting up skin configuration for: $WEEWX_SKIN"
-    
-    if [ "$WEEWX_SKIN" = "Belchertown" ]; then
-        echo "Configuring Belchertown as default skin with Seasons in subfolder..."
-        
-        # Check if BelchertownReport section already exists
-        if ! grep -q "\\[\\[BelchertownReport\\]\\]" /data/weewx.conf; then
-            # Add BelchertownReport section before SeasonsReport
-            sed -i "/\\[\\[SeasonsReport\\]\\]/i\\    # Belchertown as the main weather website\\
-\\    [[BelchertownReport]]\\
-\\        skin = Belchertown\\
-\\        enable = true\\
-\\        # Generates to public_html/ (main website root)\\
-\\
-" /data/weewx.conf
-        else
-            # Ensure BelchertownReport is enabled
-            sed -i "/\\[\\[BelchertownReport\\]\\]/,/\\[\\[.*\\]\\]/ s|^[[:space:]]*enable[[:space:]]*=.*|        enable = true|" /data/weewx.conf
-        fi
-        
-        # Move Seasons to subfolder
-        if grep -A 10 "\\[\\[SeasonsReport\\]\\]" /data/weewx.conf | grep -q "HTML_ROOT"; then
-            sed -i "/\\[\\[SeasonsReport\\]\\]/,/\\[\\[.*\\]\\]/ s|^[[:space:]]*HTML_ROOT[[:space:]]*=.*|        HTML_ROOT = public_html/seasons|" /data/weewx.conf
-        else
-            # Add HTML_ROOT setting to SeasonsReport
-            sed -i "/\\[\\[SeasonsReport\\]\\]/a\\        HTML_ROOT = public_html/seasons" /data/weewx.conf
-        fi
-        
-        echo "Belchertown configured as main skin, Seasons available at /seasons/"
-    else
-        echo "Warning: Skin '$WEEWX_SKIN' configuration not implemented"
-    fi
-elif [ -n "$WEEWX_SKIN" ] && [ "$WEEWX_SKIN" = "Seasons" ]; then
-    echo "Using default Seasons skin configuration"
-fi
+# Note: Skin configuration is handled by individual extension scripts
 
 echo "Station configuration updated successfully"
