@@ -21,9 +21,13 @@ class WeewxConfigManager:
         self.config = None
         
     def load(self):
-        """Load weewx.conf with error handling"""
+        """Load weewx.conf with error handling using WeeWX-compatible settings"""
         try:
-            self.config = ConfigObj(str(self.config_path), interpolation=False, encoding='utf-8')
+            self.config = ConfigObj(str(self.config_path),
+                                   interpolation='ConfigParser',
+                                   file_error=True,
+                                   encoding='utf-8',
+                                   default_encoding='utf-8')
             return True
         except Exception as e:
             print(f"Error loading config from {self.config_path}: {e}", file=sys.stderr)
@@ -45,7 +49,11 @@ class WeewxConfigManager:
     def validate(self):
         """Validate configuration syntax by attempting to parse it"""
         try:
-            test_config = ConfigObj(str(self.config_path), interpolation=False, encoding='utf-8')
+            test_config = ConfigObj(str(self.config_path),
+                                   interpolation='ConfigParser',
+                                   file_error=True,
+                                   encoding='utf-8',
+                                   default_encoding='utf-8')
             return True
         except Exception as e:
             print(f"Config validation failed: {e}", file=sys.stderr)
@@ -82,9 +90,19 @@ class WeewxConfigManager:
         return section.get(key, default)
     
     def set_value(self, section_path, key, value):
-        """Set a configuration value"""
+        """Set a configuration value, handling comma-separated values as lists for WeeWX compatibility"""
         section = self.navigate_to_section(section_path, create_missing=True)
-        section[key] = str(value)
+        
+        # Convert comma-separated values to lists for WeeWX compatibility
+        # This prevents ConfigObj from adding quotes around comma-containing values
+        value_str = str(value)
+        if ',' in value_str:
+            # Split on comma and strip whitespace from each part
+            value_list = [part.strip() for part in value_str.split(',')]
+            section[key] = value_list
+        else:
+            section[key] = value_str
+        
         return True
     
     def has_section(self, section_path):
@@ -127,15 +145,28 @@ class WeewxConfigManager:
             if '=' not in pair:
                 raise ValueError(f"Invalid key=value pair: {pair}")
             key, value = pair.split('=', 1)
-            section[key.strip()] = value.strip()
+            
+            # Use the same comma-handling logic as set_value
+            key = key.strip()
+            value = value.strip()
+            if ',' in value:
+                # Split on comma and strip whitespace from each part
+                value_list = [part.strip() for part in value.split(',')]
+                section[key] = value_list
+            else:
+                section[key] = value
         
         return True
     
     def merge_config_from_file(self, config_file, target_section_path):
         """Merge configuration from a file into a target section"""
         try:
-            # Load the source config
-            source_config = ConfigObj(config_file, interpolation=False, encoding='utf-8')
+            # Load the source config using WeeWX-compatible settings
+            source_config = ConfigObj(config_file,
+                                     interpolation='ConfigParser',
+                                     file_error=True,
+                                     encoding='utf-8',
+                                     default_encoding='utf-8')
             
             # Validate that source config has exactly one root section
             root_sections = list(source_config.keys())
@@ -170,9 +201,13 @@ class WeewxConfigManager:
     def merge_config_from_string(self, config_string, target_section_path):
         """Merge configuration from a string into a target section"""
         try:
-            # Create temporary ConfigObj from string
+            # Create temporary ConfigObj from string using WeeWX-compatible settings
             from io import StringIO
-            source_config = ConfigObj(StringIO(config_string), interpolation=False, encoding='utf-8')
+            source_config = ConfigObj(StringIO(config_string),
+                                     interpolation='ConfigParser',
+                                     file_error=True,
+                                     encoding='utf-8',
+                                     default_encoding='utf-8')
             
             # Get or create target section  
             target_section = self.navigate_to_section(target_section_path, create_missing=True)
