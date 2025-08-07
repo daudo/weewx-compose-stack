@@ -103,7 +103,7 @@ configure_belchertown_options() {
             /init/weewx_config_api.py remove-section "[StdReport][Belchertown][Extras]"
             /init/weewx_config_api.py create-section "[StdReport][Belchertown][Extras]"
             
-            # Set all Belchertown options using generic API with forced quotes for skin compatibility
+            # Set all Belchertown options using generic API with forced string quotes for skin compatibility
             /init/weewx_config_api.py set-multiple-values "[StdReport][Belchertown][Extras]" \
                 "site_title=$WEEWX_LOCATION" \
                 "manifest_name=$WEEWX_LOCATION" \
@@ -142,7 +142,7 @@ configure_belchertown_locale() {
         local BELCHERTOWN_LOCALE=$(get_belchertown_locale)
         echo "Configuring Belchertown locale: ${WEEWX_LANGUAGE:-en} -> $BELCHERTOWN_LOCALE"
         
-        # Apply locale to [[[Extras]]] section using generic API with forced quotes
+        # Apply locale to [[[Extras]]] section using generic API with forced string quotes for skin compatibility
         if /init/weewx_config_api.py has-section "[StdReport][Belchertown][Extras]"; then
             /init/weewx_config_api.py set-value "[StdReport][Belchertown][Extras]" "belchertown_locale" "$BELCHERTOWN_LOCALE" --force-string-quotes
             echo "Belchertown locale configuration set: $BELCHERTOWN_LOCALE"
