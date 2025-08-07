@@ -103,7 +103,7 @@ class WeewxConfigManager:
         else:
             # For simple strings, store as quoted strings for better compatibility with skins like Belchertown
             # ConfigObj will preserve quotes when writing the config file
-            if value_str.isdigit() or value_str.lower() in ['true', 'false', 'none']:
+            if self._is_numeric_or_boolean(value_str):
                 # Keep numeric and boolean values unquoted
                 section[key] = value_str
             else:
@@ -162,7 +162,7 @@ class WeewxConfigManager:
                 section[key] = value_list
             else:
                 # Apply same quoting logic as set_value
-                if value.isdigit() or value.lower() in ['true', 'false', 'none']:
+                if self._is_numeric_or_boolean(value):
                     # Keep numeric and boolean values unquoted
                     section[key] = value
                 else:
@@ -244,6 +244,29 @@ class WeewxConfigManager:
             else:
                 # Simple key-value pair
                 target[key] = value
+    
+    def _is_numeric_or_boolean(self, value_str):
+        """Check if a string represents a numeric value or boolean"""
+        value_lower = value_str.lower()
+        
+        # Check for boolean values
+        if value_lower in ['true', 'false', 'none']:
+            return True
+            
+        # Check for integer values
+        if value_str.isdigit():
+            return True
+            
+        # Check for negative integers
+        if value_str.startswith('-') and value_str[1:].isdigit():
+            return True
+            
+        # Check for float values
+        try:
+            float(value_str)
+            return True
+        except ValueError:
+            return False
 
 
 def main():
