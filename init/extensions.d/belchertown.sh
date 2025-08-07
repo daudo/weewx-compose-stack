@@ -63,28 +63,20 @@ fi
 if [ -n "$WEEWX_SKIN" ] && [ "$WEEWX_SKIN" = "Belchertown" ]; then
     echo "Configuring Belchertown as default skin with Seasons in subfolder..."
     
-    # Check if BelchertownReport section already exists
-    if ! grep -q "\\[\\[BelchertownReport\\]\\]" /data/weewx.conf; then
-        # Add BelchertownReport section before SeasonsReport
-        sed -i "/\\[\\[SeasonsReport\\]\\]/i\\    # Belchertown as the main weather website\\
-\\    [[BelchertownReport]]\\
-\\        skin = Belchertown\\
-\\        enable = true\\
-\\        # Generates to public_html/ (main website root)\\
-\\
-" /data/weewx.conf
-    else
-        # Ensure BelchertownReport is enabled
-        sed -i "/\\[\\[BelchertownReport\\]\\]/,/\\[\\[.*\\]\\]/ s|^[[:space:]]*enable[[:space:]]*=.*|        enable = true|" /data/weewx.conf
-    fi
+    # Set HTML_ROOT for Belchertown skin to public_html (main website root)
+    /init/weewx_config_api.py set-value "[StdReport][Belchertown]" "HTML_ROOT" "public_html"
+    echo "Set [[Belchertown]] HTML_ROOT = public_html"
+    
+    # Create and configure BelchertownReport section
+    /init/weewx_config_api.py create-section "[StdReport][BelchertownReport]"
+    /init/weewx_config_api.py set-multiple-values "[StdReport][BelchertownReport]" \
+        "skin=Belchertown" \
+        "enable=true"
+    echo "Configured [[BelchertownReport]] section"
     
     # Move Seasons to subfolder
-    if grep -A 10 "\\[\\[SeasonsReport\\]\\]" /data/weewx.conf | grep -q "HTML_ROOT"; then
-        sed -i "/\\[\\[SeasonsReport\\]\\]/,/\\[\\[.*\\]\\]/ s|^[[:space:]]*HTML_ROOT[[:space:]]*=.*|        HTML_ROOT = public_html/seasons|" /data/weewx.conf
-    else
-        # Add HTML_ROOT setting to SeasonsReport
-        sed -i "/\\[\\[SeasonsReport\\]\\]/a\\        HTML_ROOT = public_html/seasons" /data/weewx.conf
-    fi
+    /init/weewx_config_api.py set-value "[StdReport][SeasonsReport]" "HTML_ROOT" "public_html/seasons"
+    echo "Moved Seasons to public_html/seasons/"
     
     echo "Belchertown configured as main skin, Seasons available at /seasons/"
 fi
@@ -111,33 +103,21 @@ configure_belchertown_options() {
         local MANIFEST_SHORT_NAME=$(generate_short_name "$WEEWX_LOCATION")
         
         # Check if Belchertown section exists (created by extension installation)
-        if grep -q "\\[\\[Belchertown\\]\\]" /data/weewx.conf; then
+        if /init/weewx_config_api.py has-section "[StdReport][Belchertown]"; then
             echo "Found existing [[Belchertown]] section, configuring options..."
             
-            # Create a temporary config section to append
-            local TEMP_CONFIG="/tmp/belchertown_extras.conf"
-            cat > "$TEMP_CONFIG" << EOF
-        [[[Extras]]]
-            site_title = "$WEEWX_LOCATION"
-            manifest_name = "$WEEWX_LOCATION"
-            manifest_short_name = "$MANIFEST_SHORT_NAME"
-            home_page_header = "$WEEWX_LOCATION Website"
-            footer_copyright_text = "$WEEWX_LOCATION Website"
-            powered_by = "Observations are powered by $WEEWX_LOCATION"
-EOF
+            # Remove existing [[[Extras]]] section and recreate it cleanly
+            /init/weewx_config_api.py remove-section "[StdReport][Belchertown][Extras]"
+            /init/weewx_config_api.py create-section "[StdReport][Belchertown][Extras]"
             
-            # Check if [[[Extras]]] section already exists in [[Belchertown]]
-            if grep -A 10 "\\[\\[Belchertown\\]\\]" /data/weewx.conf | grep -q "\\[\\[\\[Extras\\]\\]\\]"; then
-                echo "Updating existing [[[Extras]]] section in [[Belchertown]]..."
-                # Remove old Extras section and add new one
-                sed -i '/\\[\\[Belchertown\\]\\]/,/\\[\\[.*\\]\\]/ {
-                    /\\[\\[\\[Extras\\]\\]\\]/,/^[[:space:]]*\\[\\[\\[/d
-                }' /data/weewx.conf
-            fi
-            
-            # Add the new Extras section to [[Belchertown]]
-            sed -i "/\\[\\[Belchertown\\]\\]/r $TEMP_CONFIG" /data/weewx.conf
-            rm -f "$TEMP_CONFIG"
+            # Set all Belchertown options using generic API
+            /init/weewx_config_api.py set-multiple-values "[StdReport][Belchertown][Extras]" \
+                "site_title=$WEEWX_LOCATION" \
+                "manifest_name=$WEEWX_LOCATION" \
+                "manifest_short_name=$MANIFEST_SHORT_NAME" \
+                "home_page_header=$WEEWX_LOCATION Website" \
+                "footer_copyright_text=$WEEWX_LOCATION Website" \
+                "powered_by=Observations are powered by $WEEWX_LOCATION"
             
             echo "Belchertown skin configuration completed:"
             echo "  - site_title: $WEEWX_LOCATION"
@@ -163,17 +143,10 @@ configure_belchertown_locale() {
         
         echo "Using auto-detection for better locale compatibility"
         
-        # Apply locale to existing [[[Extras]]] section if it exists in [[Belchertown]]
-        if grep -A 30 "\\[\\[Belchertown\\]\\]" /data/weewx.conf | grep -q "\\[\\[\\[Extras\\]\\]\\]"; then
-            if ! grep -A 30 "\\[\\[Belchertown\\]\\]" /data/weewx.conf | grep -q "belchertown_locale"; then
-                sed -i "/\\[\\[Belchertown\\]\\]/,/\\[\\[.*\\]\\]/ {
-                    /\\[\\[\\[Extras\\]\\]\\]/a\\            belchertown_locale = $BELCHERTOWN_LOCALE
-                }" /data/weewx.conf
-                echo "Belchertown locale configuration added: $BELCHERTOWN_LOCALE"
-            else
-                sed -i "/\\[\\[Belchertown\\]\\]/,/\\[\\[.*\\]\\]/ s|belchertown_locale.*=.*|            belchertown_locale = $BELCHERTOWN_LOCALE|g" /data/weewx.conf
-                echo "Belchertown locale configuration updated: $BELCHERTOWN_LOCALE"
-            fi
+        # Apply locale to [[[Extras]]] section using generic API
+        if /init/weewx_config_api.py has-section "[StdReport][Belchertown][Extras]"; then
+            /init/weewx_config_api.py set-value "[StdReport][Belchertown][Extras]" "belchertown_locale" "$BELCHERTOWN_LOCALE"
+            echo "Belchertown locale configuration set: $BELCHERTOWN_LOCALE"
         fi
     fi
 }
@@ -190,9 +163,9 @@ configure_belchertown_options
 # Configure locale settings
 configure_belchertown_locale
 
-# Validate final configuration
+# Validate final configuration using generic API
 echo "Validating final configuration..."
-if weectl extension list --config=/data/weewx.conf >/dev/null 2>&1; then
+if /init/weewx_config_api.py validate; then
     echo "Configuration validation successful"
 else
     echo "Warning: Configuration validation failed - there may be syntax errors"
