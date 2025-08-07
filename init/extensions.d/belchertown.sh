@@ -126,16 +126,21 @@ configure_belchertown_options() {
     fi
 }
 
-# Configure Belchertown locale if language is specified and weewx.conf exists
+# Map language code to proper locale string for Belchertown
+get_belchertown_locale() {
+    case "${WEEWX_LANGUAGE:-en}" in
+        de) echo "de_DE.UTF-8" ;;
+        ca) echo "ca_ES.UTF-8" ;;
+        it) echo "it_IT.UTF-8" ;;
+        en|*) echo "en_US.UTF-8" ;;  # default to English
+    esac
+}
+
+# Configure Belchertown locale - always set to avoid 'auto' issues in container
 configure_belchertown_locale() {
-    if [ -n "$WEEWX_LANGUAGE" ] && [ "$WEEWX_LANGUAGE" != "en" ] && [ -f "/data/weewx.conf" ]; then
-        echo "Configuring Belchertown locale for language: $WEEWX_LANGUAGE"
-        
-        # Use 'auto' for better compatibility - let Belchertown auto-detect
-        # This avoids locale installation issues while still supporting internationalization
-        local BELCHERTOWN_LOCALE="auto"
-        
-        echo "Using auto-detection for better locale compatibility"
+    if [ -f "/data/weewx.conf" ]; then
+        local BELCHERTOWN_LOCALE=$(get_belchertown_locale)
+        echo "Configuring Belchertown locale: ${WEEWX_LANGUAGE:-en} -> $BELCHERTOWN_LOCALE"
         
         # Apply locale to [[[Extras]]] section using generic API with forced quotes
         if /init/weewx_config_api.py has-section "[StdReport][Belchertown][Extras]"; then

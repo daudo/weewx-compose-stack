@@ -1,0 +1,24 @@
+# WeeWX Runtime Container with Locale Support
+# Extends felddy/weewx:5 to include locales for Belchertown skin internationalization
+FROM felddy/weewx:5
+
+# Switch to root to install locales
+USER root
+
+# Install locales package and generate required locales for Belchertown
+RUN apt-get update && \
+    apt-get install -y locales && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    # Generate locales for supported languages
+    echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen && \
+    echo "de_DE.UTF-8 UTF-8" >> /etc/locale.gen && \
+    echo "ca_ES.UTF-8 UTF-8" >> /etc/locale.gen && \
+    echo "it_IT.UTF-8 UTF-8" >> /etc/locale.gen && \
+    locale-gen
+
+# Switch back to weewx user for security
+USER weewx
+
+# Keep the original entrypoint and command from felddy/weewx
+# This ensures full compatibility with the base image

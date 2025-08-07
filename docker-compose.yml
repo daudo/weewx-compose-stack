@@ -9,7 +9,7 @@ services:
   weewx-init:
     build:
       context: .
-      dockerfile: init/Dockerfile.unified
+      dockerfile: Dockerfile.init
     volumes:
       - weewx_data:/data
     environment:
@@ -35,9 +35,11 @@ services:
     restart: "no"
     # This container handles all initialization: weewx.conf, GW1000 driver, and nginx config
 
-  # Run WeeWX normally
+  # Run WeeWX normally with locale support
   weewx:
-    image: felddy/weewx:5
+    build:
+      context: .
+      dockerfile: Dockerfile.runtime
     depends_on:
       weewx-init:
         condition: service_completed_successfully
