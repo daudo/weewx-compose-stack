@@ -67,13 +67,6 @@ if [ -n "$WEEWX_SKIN" ] && [ "$WEEWX_SKIN" = "Belchertown" ]; then
     /init/weewx_config_api.py set-value "[StdReport][Belchertown]" "HTML_ROOT" "public_html"
     echo "Set [[Belchertown]] HTML_ROOT = public_html"
     
-    # Create and configure BelchertownReport section
-    /init/weewx_config_api.py create-section "[StdReport][BelchertownReport]"
-    /init/weewx_config_api.py set-multiple-values "[StdReport][BelchertownReport]" \
-        "skin=Belchertown" \
-        "enable=true"
-    echo "Configured [[BelchertownReport]] section"
-    
     # Move Seasons to subfolder
     /init/weewx_config_api.py set-value "[StdReport][SeasonsReport]" "HTML_ROOT" "public_html/seasons"
     echo "Moved Seasons to public_html/seasons/"
