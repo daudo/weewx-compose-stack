@@ -101,7 +101,14 @@ class WeewxConfigManager:
             value_list = [part.strip() for part in value_str.split(',')]
             section[key] = value_list
         else:
-            section[key] = value_str
+            # For simple strings, store as quoted strings for better compatibility with skins like Belchertown
+            # ConfigObj will preserve quotes when writing the config file
+            if value_str.isdigit() or value_str.lower() in ['true', 'false', 'none']:
+                # Keep numeric and boolean values unquoted
+                section[key] = value_str
+            else:
+                # Quote string values for better skin compatibility
+                section[key] = f'"{value_str}"'
         
         return True
     
@@ -146,7 +153,7 @@ class WeewxConfigManager:
                 raise ValueError(f"Invalid key=value pair: {pair}")
             key, value = pair.split('=', 1)
             
-            # Use the same comma-handling logic as set_value
+            # Use the same comma-handling and quoting logic as set_value
             key = key.strip()
             value = value.strip()
             if ',' in value:
@@ -154,7 +161,13 @@ class WeewxConfigManager:
                 value_list = [part.strip() for part in value.split(',')]
                 section[key] = value_list
             else:
-                section[key] = value
+                # Apply same quoting logic as set_value
+                if value.isdigit() or value.lower() in ['true', 'false', 'none']:
+                    # Keep numeric and boolean values unquoted
+                    section[key] = value
+                else:
+                    # Quote string values for better skin compatibility
+                    section[key] = f'"{value}"'
         
         return True
     
