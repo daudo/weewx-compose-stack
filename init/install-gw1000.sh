@@ -65,6 +65,7 @@ if ! /init/weewx_config_api.py has-key "[Accumulator]" "daymaxwind"; then
     
     # Create temporary file with accumulator config for bulk merge
     cat > /tmp/gw1000_accum.conf << 'EOF'
+[Accumulator]
 [[daymaxwind]]
     extractor = last
 [[lightning_distance]]

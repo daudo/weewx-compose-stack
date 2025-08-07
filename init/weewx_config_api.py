@@ -137,11 +137,30 @@ class WeewxConfigManager:
             # Load the source config
             source_config = ConfigObj(config_file, interpolation=False, encoding='utf-8')
             
+            # Validate that source config has exactly one root section
+            root_sections = list(source_config.keys())
+            if len(root_sections) != 1:
+                print(f"Error: Source config file {config_file} must have exactly one root section, found: {root_sections}", file=sys.stderr)
+                return False
+            
+            # Get the source root section name
+            source_root_name = root_sections[0]
+            
+            # Parse the target section path to get the root section name
+            target_sections = self.parse_section_path(target_section_path)
+            target_root_name = target_sections[0]
+            
+            # Validate that source root matches target root
+            if source_root_name != target_root_name:
+                print(f"Error: Source config root section [{source_root_name}] does not match target section root [{target_root_name}]", file=sys.stderr)
+                return False
+            
             # Get or create target section
             target_section = self.navigate_to_section(target_section_path, create_missing=True)
             
-            # Merge the configurations
-            self._merge_sections(source_config, target_section)
+            # Merge the configurations (merge from the source root section)
+            source_root_section = source_config[source_root_name]
+            self._merge_sections(source_root_section, target_section)
             return True
             
         except Exception as e:
