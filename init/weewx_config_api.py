@@ -101,14 +101,9 @@ class WeewxConfigManager:
             value_list = [part.strip() for part in value_str.split(',')]
             section[key] = value_list
         else:
-            # For simple strings, store as quoted strings for better compatibility with skins like Belchertown
-            # ConfigObj will preserve quotes when writing the config file
-            if self._is_numeric_or_boolean(value_str):
-                # Keep numeric and boolean values unquoted
-                section[key] = value_str
-            else:
-                # Quote string values for better skin compatibility
-                section[key] = f'"{value_str}"'
+            # For simple strings, let ConfigObj handle quoting naturally
+            # ConfigObj will automatically quote strings that need it
+            section[key] = value_str
         
         return True
     
@@ -161,13 +156,8 @@ class WeewxConfigManager:
                 value_list = [part.strip() for part in value.split(',')]
                 section[key] = value_list
             else:
-                # Apply same quoting logic as set_value
-                if self._is_numeric_or_boolean(value):
-                    # Keep numeric and boolean values unquoted
-                    section[key] = value
-                else:
-                    # Quote string values for better skin compatibility
-                    section[key] = f'"{value}"'
+                # Let ConfigObj handle quoting naturally for all values
+                section[key] = value
         
         return True
     
