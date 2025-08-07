@@ -89,7 +89,7 @@ class WeewxConfigManager:
             return default
         return section.get(key, default)
     
-    def set_value(self, section_path, key, value):
+    def set_value(self, section_path, key, value, force_string_quotes=False):
         """Set a configuration value, handling comma-separated values as lists for WeeWX compatibility"""
         section = self.navigate_to_section(section_path, create_missing=True)
         
@@ -101,9 +101,18 @@ class WeewxConfigManager:
             value_list = [part.strip() for part in value_str.split(',')]
             section[key] = value_list
         else:
-            # For simple strings, let ConfigObj handle quoting naturally
-            # ConfigObj will automatically quote strings that need it
-            section[key] = value_str
+            # For simple strings, handle quoting based on requirements
+            if self._is_numeric_or_boolean(value_str):
+                # Keep numeric and boolean values unquoted
+                section[key] = value_str
+            else:
+                # For string values
+                if force_string_quotes:
+                    # Force single quotes using the trailing quote trick
+                    section[key] = self._force_single_quotes(value_str)
+                else:
+                    # Let ConfigObj handle quoting naturally
+                    section[key] = value_str
         
         return True
     
@@ -139,7 +148,7 @@ class WeewxConfigManager:
         return False
     
     # Bulk Operations
-    def set_multiple_values(self, section_path, key_value_pairs):
+    def set_multiple_values(self, section_path, key_value_pairs, force_string_quotes=False):
         """Set multiple key=value pairs in a section"""
         section = self.navigate_to_section(section_path, create_missing=True)
         
@@ -156,8 +165,18 @@ class WeewxConfigManager:
                 value_list = [part.strip() for part in value.split(',')]
                 section[key] = value_list
             else:
-                # Let ConfigObj handle quoting naturally for all values
-                section[key] = value
+                # Apply same quoting logic as set_value
+                if self._is_numeric_or_boolean(value):
+                    # Keep numeric and boolean values unquoted
+                    section[key] = value
+                else:
+                    # For string values
+                    if force_string_quotes:
+                        # Force single quotes using the trailing quote trick
+                        section[key] = self._force_single_quotes(value)
+                    else:
+                        # Let ConfigObj handle quoting naturally
+                        section[key] = value
         
         return True
     
@@ -257,6 +276,12 @@ class WeewxConfigManager:
             return True
         except ValueError:
             return False
+    
+    def _force_single_quotes(self, value_str):
+        """Force ConfigObj to use single quotes by adding/removing a trailing double quote"""
+        # Add a trailing double quote to force single quotes, 
+        # ConfigObj will write: 'My Weather Station"'
+        return f'{value_str}"'
 
 
 def main():
@@ -295,6 +320,8 @@ Examples:
     set_parser.add_argument('section', help='Section path')
     set_parser.add_argument('key', help='Configuration key name')
     set_parser.add_argument('value', help='Value to set')
+    set_parser.add_argument('--force-string-quotes', action='store_true', 
+                           help='Force single quotes around string values for skin compatibility')
     
     # has-section command
     has_section_parser = subparsers.add_parser('has-section', help='Check if section exists')
@@ -317,6 +344,8 @@ Examples:
     multi_parser = subparsers.add_parser('set-multiple-values', help='Set multiple values at once')
     multi_parser.add_argument('section', help='Section path')
     multi_parser.add_argument('pairs', nargs='+', help='Key=value pairs')
+    multi_parser.add_argument('--force-string-quotes', action='store_true',
+                             help='Force single quotes around string values for skin compatibility')
     
     # merge-config-from-file command
     merge_file_parser = subparsers.add_parser('merge-config-from-file', help='Merge config from file')
@@ -355,9 +384,11 @@ Examples:
                 return 1
                 
         elif args.command == 'set-value':
-            config_mgr.set_value(args.section, args.key, args.value)
+            force_quotes = getattr(args, 'force_string_quotes', False)
+            config_mgr.set_value(args.section, args.key, args.value, force_string_quotes=force_quotes)
             if not args.quiet:
-                print(f"Set {args.section}[{args.key}] = {args.value}")
+                quotes_info = " (with forced quotes)" if force_quotes else ""
+                print(f"Set {args.section}[{args.key}] = {args.value}{quotes_info}")
                 
         elif args.command == 'has-section':
             exists = config_mgr.has_section(args.section)
@@ -385,9 +416,11 @@ Examples:
                     print(f"Section {args.section} not found")
                     
         elif args.command == 'set-multiple-values':
-            config_mgr.set_multiple_values(args.section, args.pairs)
+            force_quotes = getattr(args, 'force_string_quotes', False)
+            config_mgr.set_multiple_values(args.section, args.pairs, force_string_quotes=force_quotes)
             if not args.quiet:
-                print(f"Set {len(args.pairs)} values in {args.section}")
+                quotes_info = " (with forced quotes)" if force_quotes else ""
+                print(f"Set {len(args.pairs)} values in {args.section}{quotes_info}")
                 
         elif args.command == 'merge-config-from-file':
             success = config_mgr.merge_config_from_file(args.file, args.section)
