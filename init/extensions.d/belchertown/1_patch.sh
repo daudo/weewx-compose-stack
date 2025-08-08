@@ -69,11 +69,23 @@ fix_template_parsing() {
     if [ -f "$template_file" ]; then
         echo "Fixing Cheetah template parsing issue in $template_file"
         
-        # Fix multiline format strings - replace any format string with line breaks
-        # Pattern: "%-I:%M<whitespace/newlines>%p" -> "%-I:%M %p"
-        perl -i -pe 'BEGIN{undef $/;} s/"%-I:%M\s*\n\s*%p"/"%-I:%M %p"/g' "$template_file"
+        # Create backup for debugging
+        cp "$template_file" "${template_file}.backup"
+        
+        # More targeted fix: only fix sunrise and sunset format strings
+        # First, join lines that have almanac.sunrise.format("%-I:%M at end with %p") on next line
+        sed -i '/almanac\.sunrise\.format("%-I:%M$/{N;s/\n[[:space:]]*%p")/ %p")/}' "$template_file"
+        
+        # Same for sunset
+        sed -i '/almanac\.sunset\.format("%-I:%M$/{N;s/\n[[:space:]]*%p")/ %p")/}' "$template_file"
         
         echo "Template parsing fix applied successfully"
+        
+        # Show what was changed
+        if command -v diff >/dev/null 2>&1; then
+            echo "Changes made:"
+            diff "${template_file}.backup" "$template_file" || true
+        fi
     else
         echo "Warning: Template file not found at $template_file"
     fi
