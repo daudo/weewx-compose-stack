@@ -1,78 +1,10 @@
 #!/bin/bash
 set -e
 
-# Belchertown Skin Installation Script
-# This script installs the modern, responsive Belchertown web interface for WeeWX
+# Belchertown Skin Configuration Script
+# This script configures the Belchertown skin using environment variables and weewx_config_api
 
-# Set default values
-BELCHERTOWN_VERSION=${BELCHERTOWN_VERSION:-1.3.1}
-ENABLE_BELCHERTOWN_SKIN=${ENABLE_BELCHERTOWN_SKIN:-true}
-
-# Skip if extension is disabled
-if [ "$ENABLE_BELCHERTOWN_SKIN" != "true" ]; then
-    echo "Belchertown skin disabled (ENABLE_BELCHERTOWN_SKIN=false)"
-    return 0 2>/dev/null || exit 0
-fi
-
-echo "Processing Belchertown skin..."
-
-# Function to check if extension is installed and get version
-check_extension_version() {
-    local extension_name=$1
-    weectl extension list --config=/data/weewx.conf 2>/dev/null | grep "^${extension_name}" | awk '{print $2}' || echo ""
-}
-
-# Check current installation status
-INSTALLED_BELCHERTOWN_VERSION=$(check_extension_version "Belchertown")
-
-# Handle version updates
-if [ -n "$INSTALLED_BELCHERTOWN_VERSION" ] && [ "$INSTALLED_BELCHERTOWN_VERSION" != "$BELCHERTOWN_VERSION" ]; then
-    echo "Updating Belchertown skin: $INSTALLED_BELCHERTOWN_VERSION → $BELCHERTOWN_VERSION"
-    weectl extension uninstall Belchertown --config=/data/weewx.conf --yes
-    INSTALLED_BELCHERTOWN_VERSION=""
-fi
-
-# Install if not present or after uninstall
-if [ -z "$INSTALLED_BELCHERTOWN_VERSION" ]; then
-    echo "Installing Belchertown skin v$BELCHERTOWN_VERSION..."
-    BELCHERTOWN_URL="https://github.com/poblabs/weewx-belchertown/releases/download/weewx-belchertown-${BELCHERTOWN_VERSION}/weewx-belchertown-release.${BELCHERTOWN_VERSION}.tar.gz"
-    
-    # Install extension directly from URL
-    echo "Installing from: $BELCHERTOWN_URL"
-    if weectl extension install "$BELCHERTOWN_URL" --config=/data/weewx.conf --yes; then
-        echo "Belchertown skin installation successful"
-    else
-        echo "Error: Belchertown skin installation failed"
-        return 1 2>/dev/null || exit 1
-    fi
-    
-    # Apply Python 3.13 locale.format monkey-patch
-    source /init/python313-compat.sh
-    apply_locale_format_monkeypatch "/data/bin/user/belchertown.py" "Belchertown"
-    
-    echo "Belchertown skin v$BELCHERTOWN_VERSION installed successfully"
-else
-    echo "Belchertown skin v$BELCHERTOWN_VERSION already installed"
-    
-    # Apply Python 3.13 locale.format monkey-patch even if already installed
-    source /init/python313-compat.sh
-    apply_locale_format_monkeypatch "/data/bin/user/belchertown.py" "Belchertown"
-fi
-
-# Configure Belchertown as default skin if WEEWX_SKIN is set to Belchertown
-if [ -n "$WEEWX_SKIN" ] && [ "$WEEWX_SKIN" = "Belchertown" ]; then
-    echo "Configuring Belchertown as default skin with Seasons in subfolder..."
-    
-    # Set HTML_ROOT for Belchertown skin to public_html (main website root)
-    /init/weewx_config_api.py set-value "[StdReport][Belchertown]" "HTML_ROOT" "public_html"
-    echo "Set [[Belchertown]] HTML_ROOT = public_html"
-    
-    # Move Seasons to subfolder
-    /init/weewx_config_api.py set-value "[StdReport][SeasonsReport]" "HTML_ROOT" "public_html/seasons"
-    echo "Moved Seasons to public_html/seasons/"
-    
-    echo "Belchertown configured as main skin, Seasons available at /seasons/"
-fi
+echo "Configuring Belchertown skin..."
 
 # Function to generate short name from location (first letters of each word)
 generate_short_name() {
@@ -86,8 +18,24 @@ generate_short_name() {
     }'
 }
 
+# Configure Belchertown as default skin if WEEWX_SKIN is set to Belchertown
+configure_default_skin() {
+    if [ -n "$WEEWX_SKIN" ] && [ "$WEEWX_SKIN" = "Belchertown" ]; then
+        echo "Configuring Belchertown as default skin with Seasons in subfolder..."
+        
+        # Set HTML_ROOT for Belchertown skin to public_html (main website root)
+        /init/weewx_config_api.py set-value "[StdReport][Belchertown]" "HTML_ROOT" "public_html"
+        echo "Set [[Belchertown]] HTML_ROOT = public_html"
+        
+        # Move Seasons to subfolder
+        /init/weewx_config_api.py set-value "[StdReport][SeasonsReport]" "HTML_ROOT" "public_html/seasons"
+        echo "Moved Seasons to public_html/seasons/"
+        
+        echo "Belchertown configured as main skin, Seasons available at /seasons/"
+    fi
+}
+
 # Configure Belchertown skin options using environment variables
-# This runs after installation to avoid corrupting config during extension install
 configure_belchertown_options() {
     if [ -f "/data/weewx.conf" ] && [ -n "$WEEWX_LOCATION" ]; then
         echo "Configuring Belchertown skin options from environment variables..."
@@ -152,19 +100,12 @@ configure_belchertown_locale() {
     fi
 }
 
-# Run all configuration functions after installation
-echo "Applying post-installation configuration..."
-
-# Configure skin switching (if needed)
-# Note: This happens during installation above
-
-# Configure Belchertown options from environment variables
+# Apply all configurations
+configure_default_skin
 configure_belchertown_options
-
-# Configure locale settings
 configure_belchertown_locale
 
-# Validate final configuration using generic API
+# Validate final configuration
 echo "Validating final configuration..."
 if /init/weewx_config_api.py validate; then
     echo "Configuration validation successful"
@@ -176,3 +117,5 @@ else
         echo "Configuration restored from backup after validation failure"
     fi
 fi
+
+echo "Belchertown configuration phase completed"

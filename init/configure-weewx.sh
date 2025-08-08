@@ -56,6 +56,12 @@ if [ -n "$WEEWX_UNIT_SYSTEM" ]; then
     /init/weewx_config_api.py set-value "[StdReport][Defaults]" "unit_system" "$WEEWX_UNIT_SYSTEM"
 fi
 
+# Set language for all reports - defaults to English if not specified
+if [ -n "$WEEWX_LANGUAGE" ] && [ "$WEEWX_LANGUAGE" != "en" ]; then
+    echo "Setting language: $WEEWX_LANGUAGE"
+    /init/weewx_config_api.py set-value "[StdReport][Defaults]" "lang" "$WEEWX_LANGUAGE"
+fi
+
 # Handle station_url (ConfigObj handles both commented and uncommented cases)
 if [ -n "$WEEWX_STATION_URL" ]; then
     echo "Setting station URL: $WEEWX_STATION_URL"

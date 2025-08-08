@@ -14,7 +14,7 @@ if [ "$ENABLE_INIGO_EXTENSION" != "true" ]; then
     return 0 2>/dev/null || exit 0
 fi
 
-echo "Processing Inigo extension (weeWXWeatherApp support)..."
+echo "Installing Inigo extension (weeWXWeatherApp support)..."
 
 # Function to validate weewx.conf before proceeding
 validate_config() {
@@ -69,43 +69,9 @@ if [ -z "$INSTALLED_INIGO_VERSION" ]; then
     echo "Installing from: $INIGO_URL"
     weectl extension install "$INIGO_URL" --config=/data/weewx.conf --yes
     
-    # Create Inigo settings file configured from environment variables
-    echo "Setting up Inigo settings file for Android app access..."
-    if mkdir -p /data/public_html; then
-        # Use environment variables with defaults
-        STATION_NAME="${WEEWX_LOCATION:-My Weather Station}"
-        STATION_LATITUDE="${WEEWX_LATITUDE:-0.0}"
-        STATION_LONGITUDE="${WEEWX_LONGITUDE:-0.0}"
-        
-        echo "Creating inigo-settings.txt with station configuration..."
-        cat > "/data/public_html/inigo-settings.txt" << EOF
-# Inigo Settings File - Configured automatically from environment variables
-# Station identification
-station_name=${STATION_NAME}
-latitude=${STATION_LATITUDE}
-longitude=${STATION_LONGITUDE}
-
-# Data source (points to WeeWX-generated inigo-data.txt)
-data=inigo-data.txt
-
-# Additional settings can be added here as needed
-# See: https://github.com/evilbunny2008/weeWXWeatherApp/wiki/InigoSettings.txt
-EOF
-        echo "Settings file created at /data/public_html/inigo-settings.txt"
-        echo "Station: ${STATION_NAME} (${STATION_LATITUDE}, ${STATION_LONGITUDE})"
-    else
-        echo "Warning: Could not create /data/public_html directory"
-    fi
-    
-    # Install pyephem for enhanced almanac data (optional but recommended)
-    echo "Installing pyephem for enhanced almanac support..."
-    if pip3 install pyephem --target /data/lib/python/site-packages --quiet; then
-        echo "pyephem installed successfully"
-    else
-        echo "Warning: pyephem installation failed, continuing..."
-    fi
-    
     echo "Inigo extension v$INIGO_VERSION installed successfully"
 else
     echo "Inigo extension v$INIGO_VERSION already installed"
 fi
+
+echo "Inigo installation phase completed"

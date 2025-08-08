@@ -16,7 +16,6 @@ COPY nginx/nginx.conf /tmp/nginx.conf
 
 # Copy modular initialization scripts and make them executable
 COPY --chmod=755 init/configure-weewx.sh /init/configure-weewx.sh
-COPY --chmod=755 init/install-gw1000.sh /init/install-gw1000.sh
 COPY --chmod=755 init/install-extensions.sh /init/install-extensions.sh
 COPY --chmod=755 init/setup-nginx.sh /init/setup-nginx.sh
 COPY --chmod=755 init/backup-config.sh /init/backup-config.sh
