@@ -36,10 +36,20 @@ fi
 if [ -z "$INSTALLED_BELCHERTOWN_VERSION" ]; then
     echo "Installing Belchertown skin v$BELCHERTOWN_VERSION..."
     BELCHERTOWN_URL="https://github.com/uajqq/weewx-belchertown-new/archive/refs/tags/weewx-belchertown-${BELCHERTOWN_VERSION}.tar.gz"
+    BELCHERTOWN_FILE="/tmp/belchertown-current.tar.gz"
 
-    # Install extension directly from URL
-    echo "Installing from: $BELCHERTOWN_URL"
-    if weectl extension install "$BELCHERTOWN_URL" --config=/data/weewx.conf --yes; then
+    # Download the tar.gz file first
+    echo "Downloading from: $BELCHERTOWN_URL"
+    if wget -q -O "$BELCHERTOWN_FILE" "$BELCHERTOWN_URL"; then
+        echo "Belchertown skin downloaded successfully"
+    else
+        echo "Error: Failed to download Belchertown skin"
+        return 1 2>/dev/null || exit 1
+    fi
+
+    # Install extension from downloaded local file
+    echo "Installing from downloaded file: $BELCHERTOWN_FILE"
+    if weectl extension install "$BELCHERTOWN_FILE" --config=/data/weewx.conf --yes; then
         echo "Belchertown skin installation successful"
     else
         echo "Error: Belchertown skin installation failed"

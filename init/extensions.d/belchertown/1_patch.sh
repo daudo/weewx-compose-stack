@@ -25,19 +25,41 @@ apply_python_compatibility() {
 
 # Patch 2: Copy missing language files (fix for upstream bug)
 copy_missing_language_files() {
-    local source_dir="/home/udo/git/weewx-belchertown/skins/Belchertown/lang"
     local target_dir="/data/skins/Belchertown/lang"
+    local temp_dir="/tmp/belchertown_extract"
+    local belchertown_file="/tmp/belchertown-current.tar.gz"
     
-    if [ -d "$source_dir" ] && [ ! -d "$target_dir" ]; then
-        echo "Copying missing language files from $source_dir to $target_dir"
-        mkdir -p "$(dirname "$target_dir")"
-        cp -r "$source_dir" "$target_dir"
-        echo "Successfully copied language files (de.conf, ca.conf, it.conf)"
-    elif [ -d "$target_dir" ]; then
-        echo "Language files already present at $target_dir"
-    else
-        echo "Warning: Source language directory $source_dir not found"
+    # Check if downloaded file exists
+    if [ ! -f "$belchertown_file" ]; then
+        echo "Warning: Belchertown download file not found at $belchertown_file"
+        return 0
     fi
+    
+    echo "Extracting language files from $belchertown_file"
+    
+    # Create temporary extraction directory
+    mkdir -p "$temp_dir"
+    
+    # Extract the tar.gz file temporarily
+    if tar -xzf "$belchertown_file" -C "$temp_dir" 2>/dev/null; then
+        # Find the extracted directory (it has a version-specific name)
+        local extracted_dir=$(find "$temp_dir" -maxdepth 1 -type d -name "weewx-belchertown-new-*" | head -1)
+        local source_dir="$extracted_dir/skins/Belchertown/lang"
+        
+        if [ -d "$source_dir" ]; then
+            echo "Copying language files from extracted archive to $target_dir"
+            mkdir -p "$(dirname "$target_dir")"
+            cp -r "$source_dir" "$target_dir"
+            echo "Successfully copied language files (de.conf, ca.conf, it.conf)"
+        else
+            echo "Warning: Language directory not found in extracted archive"
+        fi
+    else
+        echo "Warning: Failed to extract $belchertown_file"
+    fi
+    
+    # Clean up temporary extraction
+    rm -rf "$temp_dir"
 }
 
 # Apply all patches
