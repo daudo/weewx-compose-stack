@@ -5,7 +5,7 @@ set -e
 # This script installs the modern, responsive Belchertown web interface for WeeWX
 
 # Set default values
-BELCHERTOWN_VERSION=${BELCHERTOWN_VERSION:-1.3.1}
+BELCHERTOWN_VERSION=${BELCHERTOWN_VERSION:-1.4}
 ENABLE_BELCHERTOWN_SKIN=${ENABLE_BELCHERTOWN_SKIN:-true}
 
 # Skip if extension is disabled
@@ -35,8 +35,8 @@ fi
 # Install if not present or after uninstall
 if [ -z "$INSTALLED_BELCHERTOWN_VERSION" ]; then
     echo "Installing Belchertown skin v$BELCHERTOWN_VERSION..."
-    BELCHERTOWN_URL="https://github.com/poblabs/weewx-belchertown/releases/download/weewx-belchertown-${BELCHERTOWN_VERSION}/weewx-belchertown-release.${BELCHERTOWN_VERSION}.tar.gz"
-    
+    BELCHERTOWN_URL="https://github.com/uajqq/weewx-belchertown-new/archive/refs/tags/weewx-belchertown-${BELCHERTOWN_VERSION}.tar.gz"
+
     # Install extension directly from URL
     echo "Installing from: $BELCHERTOWN_URL"
     if weectl extension install "$BELCHERTOWN_URL" --config=/data/weewx.conf --yes; then
