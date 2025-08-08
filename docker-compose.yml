@@ -17,6 +17,7 @@ services:
       - PIP_TARGET=/data/lib/python/site-packages
       - PYTHONPATH=/data/lib/python/site-packages
       - WEEWX_LOCATION=${WEEWX_LOCATION:-My Cosy Weather Station}
+      - WEEWX_VERBOSE_HARDWARE=${WEEWX_VERBOSE_HARDWARE:-Personal Weather Station}
       - WEEWX_LATITUDE=${WEEWX_LATITUDE:-42.2627}
       - WEEWX_LONGITUDE=${WEEWX_LONGITUDE:-11.3945}
       - "WEEWX_ALTITUDE=${WEEWX_ALTITUDE:-587, meter}"
