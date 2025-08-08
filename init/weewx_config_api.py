@@ -34,17 +34,13 @@ class WeewxConfigManager:
             return False
     
     def save(self, backup=True):
-        """Save configuration with optional backup and post-process hash triggers"""
+        """Save configuration with optional backup"""
         if backup and self.config_path.exists():
             backup_path = f"{self.config_path}.py-backup-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
             shutil.copy2(self.config_path, backup_path)
         
         try:
             self.config.write()
-            
-            # Post-process to clean up hash triggers used for forcing quotes
-            self._cleanup_hash_triggers()
-            
             return True
         except Exception as e:
             print(f"Error saving config to {self.config_path}: {e}", file=sys.stderr)
@@ -93,7 +89,7 @@ class WeewxConfigManager:
             return default
         return section.get(key, default)
     
-    def set_value(self, section_path, key, value, force_string_quotes=False):
+    def set_value(self, section_path, key, value):
         """Set a configuration value, handling comma-separated values as lists for WeeWX compatibility"""
         section = self.navigate_to_section(section_path, create_missing=True)
         
@@ -105,13 +101,8 @@ class WeewxConfigManager:
             value_list = [part.strip() for part in value_str.split(',')]
             section[key] = value_list
         else:
-            # Handle quoting for string values
-            if force_string_quotes and not self._is_numeric_or_boolean(value_str):
-                # Use hash trigger to force ConfigObj to add quotes, then we'll post-process
-                section[key] = f"{value_str} #"
-            else:
-                # Let ConfigObj handle quoting naturally
-                section[key] = value_str
+            # Let ConfigObj handle quoting naturally
+            section[key] = value_str
         
         return True
     
@@ -147,7 +138,7 @@ class WeewxConfigManager:
         return False
     
     # Bulk Operations
-    def set_multiple_values(self, section_path, key_value_pairs, force_string_quotes=False):
+    def set_multiple_values(self, section_path, key_value_pairs):
         """Set multiple key=value pairs in a section"""
         section = self.navigate_to_section(section_path, create_missing=True)
         
@@ -156,7 +147,7 @@ class WeewxConfigManager:
                 raise ValueError(f"Invalid key=value pair: {pair}")
             key, value = pair.split('=', 1)
             
-            # Use the same comma-handling and quoting logic as set_value
+            # Use the same comma-handling logic as set_value
             key = key.strip()
             value = value.strip()
             if ',' in value:
@@ -164,13 +155,8 @@ class WeewxConfigManager:
                 value_list = [part.strip() for part in value.split(',')]
                 section[key] = value_list
             else:
-                # Handle quoting for string values
-                if force_string_quotes and not self._is_numeric_or_boolean(value):
-                    # Use hash trigger to force ConfigObj to add quotes, then we'll post-process
-                    section[key] = f"{value} #"
-                else:
-                    # Let ConfigObj handle quoting naturally
-                    section[key] = value
+                # Let ConfigObj handle quoting naturally
+                section[key] = value
         
         return True
     
@@ -248,58 +234,6 @@ class WeewxConfigManager:
                 # Simple key-value pair
                 target[key] = value
     
-    def _is_numeric_or_boolean(self, value_str):
-        """Check if a string represents a numeric value or boolean"""
-        value_lower = value_str.lower()
-        
-        # Check for boolean values
-        if value_lower in ['true', 'false', 'none']:
-            return True
-            
-        # Check for integer values
-        if value_str.isdigit():
-            return True
-            
-        # Check for negative integers
-        if value_str.startswith('-') and value_str[1:].isdigit():
-            return True
-            
-        # Check for float values
-        try:
-            float(value_str)
-            return True
-        except ValueError:
-            return False
-    
-    def _cleanup_hash_triggers(self):
-        """Post-process the written config file to remove hash triggers used for forcing quotes"""
-        try:
-            with open(self.config_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
-            # Remove hash triggers from quoted strings
-            # Look for patterns like: key = "value #" and replace with: key = "value"
-            import re
-            
-            # Handle both double and single quotes separately to avoid crossing quote types
-            # Pattern for double quotes: "something #"
-            double_quote_pattern = r'(\s*=\s*")([^"]*) #(")'
-            # Pattern for single quotes: 'something #'
-            single_quote_pattern = r"(\s*=\s*')([^']*) #(')"
-            
-            # Apply both patterns
-            cleaned_content = re.sub(double_quote_pattern, r'\1\2\3', content)
-            cleaned_content = re.sub(single_quote_pattern, r'\1\2\3', cleaned_content)
-            
-            # Write the cleaned content back
-            with open(self.config_path, 'w', encoding='utf-8') as f:
-                f.write(cleaned_content)
-            
-            return True
-            
-        except Exception as e:
-            print(f"Warning: Could not clean hash triggers: {e}", file=sys.stderr)
-            return False
     
 
 
@@ -339,8 +273,6 @@ Examples:
     set_parser.add_argument('section', help='Section path')
     set_parser.add_argument('key', help='Configuration key name')
     set_parser.add_argument('value', help='Value to set')
-    set_parser.add_argument('--force-string-quotes', action='store_true', 
-                           help='Force single quotes around string values for skin compatibility')
     
     # has-section command
     has_section_parser = subparsers.add_parser('has-section', help='Check if section exists')
@@ -363,8 +295,6 @@ Examples:
     multi_parser = subparsers.add_parser('set-multiple-values', help='Set multiple values at once')
     multi_parser.add_argument('section', help='Section path')
     multi_parser.add_argument('pairs', nargs='+', help='Key=value pairs')
-    multi_parser.add_argument('--force-string-quotes', action='store_true',
-                             help='Force single quotes around string values for skin compatibility')
     
     # merge-config-from-file command
     merge_file_parser = subparsers.add_parser('merge-config-from-file', help='Merge config from file')
@@ -403,8 +333,7 @@ Examples:
                 return 1
                 
         elif args.command == 'set-value':
-            force_quotes = getattr(args, 'force_string_quotes', False)
-            config_mgr.set_value(args.section, args.key, args.value, force_string_quotes=force_quotes)
+            config_mgr.set_value(args.section, args.key, args.value)
             if not args.quiet:
                 print(f"Set {args.section}[{args.key}] = {args.value}")
                 
@@ -434,8 +363,7 @@ Examples:
                     print(f"Section {args.section} not found")
                     
         elif args.command == 'set-multiple-values':
-            force_quotes = getattr(args, 'force_string_quotes', False)
-            config_mgr.set_multiple_values(args.section, args.pairs, force_string_quotes=force_quotes)
+            config_mgr.set_multiple_values(args.section, args.pairs)
             if not args.quiet:
                 print(f"Set {len(args.pairs)} values in {args.section}")
                 
