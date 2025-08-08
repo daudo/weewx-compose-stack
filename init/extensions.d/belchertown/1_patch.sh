@@ -69,8 +69,9 @@ fix_template_parsing() {
     if [ -f "$template_file" ]; then
         echo "Fixing Cheetah template parsing issue in $template_file"
         
-        # Fix sunrise format string - add missing space between %M and %p
-        sed -i 's/%-I:%M%p/%-I:%M %p/g' "$template_file"
+        # Fix multiline format strings - replace any format string with line breaks
+        # Pattern: "%-I:%M<whitespace/newlines>%p" -> "%-I:%M %p"
+        perl -i -pe 'BEGIN{undef $/;} s/"%-I:%M\s*\n\s*%p"/"%-I:%M %p"/g' "$template_file"
         
         echo "Template parsing fix applied successfully"
     else
