@@ -62,8 +62,25 @@ copy_missing_language_files() {
     rm -rf "$temp_dir"
 }
 
+# Patch 3: Fix Cheetah template parsing issue in v1.4 
+fix_template_parsing() {
+    local template_file="/data/skins/Belchertown/pi/index.html.tmpl"
+    
+    if [ -f "$template_file" ]; then
+        echo "Fixing Cheetah template parsing issue in $template_file"
+        
+        # Fix sunrise format string - add missing space between %M and %p
+        sed -i 's/%-I:%M%p/%-I:%M %p/g' "$template_file"
+        
+        echo "Template parsing fix applied successfully"
+    else
+        echo "Warning: Template file not found at $template_file"
+    fi
+}
+
 # Apply all patches
 apply_python_compatibility
 copy_missing_language_files
+fix_template_parsing
 
 echo "Belchertown patch phase completed"
