@@ -2,28 +2,32 @@
 set -e
 
 # Belchertown Skin Patching Script
-# This script applies patches to fix upstream bugs and missing files
+# This script applies patches and fixes upstream bugs using a hybrid approach
 
 echo "Applying patches for Belchertown skin..."
 
-# Patch 1: Apply Python 3.13 locale.format monkey-patch
-apply_python_compatibility() {
-    local file_path="/data/bin/user/belchertown.py"
+# 1. Apply code patches using patch files
+apply_patch_files() {
+    local patch_dir="$(dirname "$0")/patches"
     
-    if [ -f "$file_path" ]; then
-        echo "Applying Python 3.13 compatibility patch to $file_path"
-        
-        # Source the compatibility functions
-        source /init/python313-compat.sh
-        apply_locale_format_monkeypatch "$file_path" "Belchertown"
-        
-        echo "Python compatibility patch applied successfully"
+    if [ -d "$patch_dir" ]; then
+        echo "Applying patch files from $patch_dir"
+        for patch_file in "$patch_dir"/*.patch; do
+            if [ -f "$patch_file" ]; then
+                echo "Applying $(basename "$patch_file")..."
+                if patch -p0 -d /data < "$patch_file"; then
+                    echo "Successfully applied $(basename "$patch_file")"
+                else
+                    echo "Warning: Failed to apply $(basename "$patch_file")"
+                fi
+            fi
+        done
     else
-        echo "Warning: Belchertown script not found at $file_path"
+        echo "No patches directory found at $patch_dir"
     fi
 }
 
-# Patch 2: Copy missing language files (fix for upstream bug)
+# 2. Handle file additions/corrections with simple operations
 copy_missing_language_files() {
     local target_dir="/data/skins/Belchertown/lang"
     local temp_dir="/tmp/belchertown_extract"
@@ -35,7 +39,7 @@ copy_missing_language_files() {
         return 0
     fi
     
-    echo "Extracting language files from $belchertown_file"
+    echo "Extracting and copying missing language files..."
     
     # Create temporary extraction directory
     mkdir -p "$temp_dir"
@@ -43,7 +47,7 @@ copy_missing_language_files() {
     # Extract the tar.gz file temporarily
     if tar -xzf "$belchertown_file" -C "$temp_dir" 2>/dev/null; then
         # Find the extracted directory (it has a version-specific name)
-        local extracted_dir=$(find "$temp_dir" -maxdepth 1 -type d -name "weewx-belchertown-new-*" | head -1)
+        local extracted_dir=$(find "$temp_dir" -maxdepth 1 -type d -name "weewx-belchertown-*" | head -1)
         local source_dir="$extracted_dir/skins/Belchertown/lang"
         
         if [ -d "$source_dir" ]; then
@@ -62,38 +66,8 @@ copy_missing_language_files() {
     rm -rf "$temp_dir"
 }
 
-# Patch 3: Fix Cheetah template parsing issue in v1.4 
-fix_template_parsing() {
-    local template_file="/data/skins/Belchertown/pi/index.html.tmpl"
-    
-    if [ -f "$template_file" ]; then
-        echo "Fixing Cheetah template parsing issue in $template_file"
-        
-        # Create backup for debugging
-        cp "$template_file" "${template_file}.backup"
-        
-        # More targeted fix: only fix sunrise and sunset format strings
-        # First, join lines that have almanac.sunrise.format("%-I:%M at end with %p") on next line
-        sed -i '/almanac\.sunrise\.format("%-I:%M$/{N;s/\n[[:space:]]*%p")/ %p")/}' "$template_file"
-        
-        # Same for sunset
-        sed -i '/almanac\.sunset\.format("%-I:%M$/{N;s/\n[[:space:]]*%p")/ %p")/}' "$template_file"
-        
-        echo "Template parsing fix applied successfully"
-        
-        # Show what was changed
-        if command -v diff >/dev/null 2>&1; then
-            echo "Changes made:"
-            diff "${template_file}.backup" "$template_file" || true
-        fi
-    else
-        echo "Warning: Template file not found at $template_file"
-    fi
-}
-
-# Apply all patches
-apply_python_compatibility
+# Apply all patches and fixes
+apply_patch_files
 copy_missing_language_files
-fix_template_parsing
 
 echo "Belchertown patch phase completed"

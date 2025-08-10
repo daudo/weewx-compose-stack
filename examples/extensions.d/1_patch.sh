@@ -2,54 +2,50 @@
 set -e
 
 # Extension Patching Script Template
-# This script applies patches to fix upstream bugs or missing files
+# This script applies patches using a hybrid approach: patch files for code changes, simple operations for file additions
 
 EXTENSION_NAME="${EXTENSION_NAME:-ExtensionName}"
 
 echo "Applying patches for $EXTENSION_NAME..."
 
-# Example: Copy missing files (like Belchertown lang files)
-copy_missing_files() {
-    local source_dir="$1"
-    local target_dir="$2"
-    local description="$3"
+# 1. Apply code patches using patch files
+apply_patch_files() {
+    local patch_dir="$(dirname "$0")/patches"
     
-    if [ -d "$source_dir" ] && [ ! -d "$target_dir" ]; then
-        echo "Copying missing $description from $source_dir to $target_dir"
-        mkdir -p "$(dirname "$target_dir")"
-        cp -r "$source_dir" "$target_dir"
-        echo "Successfully copied $description"
-    elif [ -d "$target_dir" ]; then
-        echo "$description already present at $target_dir"
+    if [ -d "$patch_dir" ]; then
+        echo "Applying patch files from $patch_dir"
+        for patch_file in "$patch_dir"/*.patch; do
+            if [ -f "$patch_file" ]; then
+                echo "Applying $(basename "$patch_file")..."
+                if patch -p0 -d /data < "$patch_file"; then
+                    echo "Successfully applied $(basename "$patch_file")"
+                else
+                    echo "Warning: Failed to apply $(basename "$patch_file")"
+                fi
+            fi
+        done
     else
-        echo "Warning: Source directory $source_dir not found for $description"
+        echo "No patches directory found at $patch_dir"
     fi
 }
 
-# Example: Apply Python compatibility patches
-apply_python_compatibility() {
-    local file_path="$1"
-    local extension_name="$2"
+# 2. Handle file additions/corrections with simple operations
+fix_missing_files() {
+    # Example: Copy missing files from downloaded archive
+    # This is useful when upstream installation is incomplete
     
-    if [ -f "$file_path" ]; then
-        echo "Applying Python 3.13 compatibility patch to $file_path"
-        
-        # Source the compatibility functions
-        source /init/python313-compat.sh
-        apply_locale_format_monkeypatch "$file_path" "$extension_name"
-        
-        echo "Python compatibility patch applied successfully"
-    else
-        echo "Warning: Target file $file_path not found for patching"
-    fi
+    echo "Checking for missing files..."
+    
+    # Add your file operation logic here
+    # Example:
+    # if [ ! -f "/data/expected/file.txt" ]; then
+    #     echo "Copying missing file..."
+    #     cp "/tmp/source/file.txt" "/data/expected/file.txt"
+    # fi
 }
 
-# TODO: Add specific patches for this extension
-# Examples:
-# copy_missing_files "/path/to/source/lang" "/data/skins/Extension/lang" "language files"
-# apply_python_compatibility "/data/bin/user/extension.py" "$EXTENSION_NAME"
-
-# For extensions that don't need patches, this script can be empty or just echo
-echo "No patches required for $EXTENSION_NAME"
+# Apply all patches and fixes
+apply_patch_files
+fix_missing_files
 
 echo "$EXTENSION_NAME patch phase completed"

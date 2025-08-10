@@ -35,7 +35,7 @@ fi
 # Install if not present or after uninstall
 if [ -z "$INSTALLED_BELCHERTOWN_VERSION" ]; then
     echo "Installing Belchertown skin v$BELCHERTOWN_VERSION..."
-    BELCHERTOWN_URL="https://github.com/uajqq/weewx-belchertown-new/archive/refs/tags/weewx-belchertown-${BELCHERTOWN_VERSION}.tar.gz"
+    BELCHERTOWN_URL="https://github.com/poblabs/weewx-belchertown/releases/download/weewx-belchertown-${BELCHERTOWN_VERSION}/weewx-belchertown-release.${BELCHERTOWN_VERSION}.tar.gz"
     BELCHERTOWN_FILE="/tmp/belchertown-current.tar.gz"
 
     # Download the tar.gz file first
