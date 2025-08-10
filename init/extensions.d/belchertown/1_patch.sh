@@ -33,10 +33,10 @@ copy_missing_language_files() {
         local source_dir="$extracted_dir/skins/Belchertown/lang"
         
         if [ -d "$source_dir" ]; then
-            log_warning "Copying language files from extracted archive to $target_dir"
+            log_info "Copying language files from extracted archive to $target_dir"
             mkdir -p "$(dirname "$target_dir")"
             cp -r "$source_dir" "$target_dir"
-            log_warning "Successfully copied language files (de.conf, ca.conf, it.conf)"
+            log_info "Successfully copied language files (de.conf, ca.conf, it.conf)"
         else
             echo "Warning: Language directory not found in extracted archive"
         fi
