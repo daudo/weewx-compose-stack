@@ -17,11 +17,11 @@ copy_missing_language_files() {
     
     # Check if downloaded file exists
     if [ ! -f "$belchertown_file" ]; then
-        echo "Warning: Belchertown download file not found at $belchertown_file"
+        log_warning "Warning: Belchertown download file not found at $belchertown_file"
         return 0
     fi
     
-    echo "Extracting and copying missing language files..."
+    log_info "Extracting and copying missing language files..."
     
     # Create temporary extraction directory
     mkdir -p "$temp_dir"
@@ -33,10 +33,10 @@ copy_missing_language_files() {
         local source_dir="$extracted_dir/skins/Belchertown/lang"
         
         if [ -d "$source_dir" ]; then
-            echo "Copying language files from extracted archive to $target_dir"
+            log_warning "Copying language files from extracted archive to $target_dir"
             mkdir -p "$(dirname "$target_dir")"
             cp -r "$source_dir" "$target_dir"
-            echo "Successfully copied language files (de.conf, ca.conf, it.conf)"
+            log_warning "Successfully copied language files (de.conf, ca.conf, it.conf)"
         else
             echo "Warning: Language directory not found in extracted archive"
         fi
