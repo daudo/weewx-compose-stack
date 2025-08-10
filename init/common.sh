@@ -49,9 +49,9 @@ apply_patch_files() {
             echo "[$patch_count] Applying $patch_name..."
             
             # Test if patch can be applied (dry run)
-            if patch -p0 -d /data --dry-run < "$patch_file" >/dev/null 2>&1; then
+            if cat "$patch_file" | patch -p0 -d /data --dry-run >/dev/null 2>&1; then
                 # Apply the patch
-                if patch -p0 -d /data < "$patch_file"; then
+                if cat "$patch_file" | patch -p0 -d /data; then
                     log_success "Successfully applied $patch_name"
                     applied_count=$((applied_count + 1))
                 else
@@ -61,7 +61,7 @@ apply_patch_files() {
             else
                 log_warning "Skipping $patch_name (already applied or conflicts)"
                 # Check if already applied by testing reverse patch
-                if patch -p0 -d /data -R --dry-run < "$patch_file" >/dev/null 2>&1; then
+                if cat "$patch_file" | patch -p0 -d /data -R --dry-run >/dev/null 2>&1; then
                     log_info "$patch_name appears to be already applied"
                     applied_count=$((applied_count + 1))
                 else
