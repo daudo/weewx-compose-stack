@@ -4,15 +4,18 @@ set -e
 # Inigo Extension Patching Script
 # This script applies patches to the Inigo extension if needed
 
-echo "Applying patches for Inigo extension..."
+# Source common utilities
+source /init/common.sh
+
+log_info "Applying patches for Inigo extension..."
 
 # Install pyephem for enhanced almanac data (optional but recommended)
 install_pyephem() {
-    echo "Installing pyephem for enhanced almanac support..."
+    log_info "Installing pyephem for enhanced almanac support..."
     if pip3 install pyephem --target /data/lib/python/site-packages --quiet; then
-        echo "pyephem installed successfully"
+        log_success "pyephem installed successfully"
     else
-        echo "Warning: pyephem installation failed, continuing..."
+        log_warning "pyephem installation failed, continuing..."
     fi
 }
 
@@ -22,4 +25,4 @@ install_pyephem
 # Note: Inigo extension typically doesn't need many patches
 # Any future compatibility fixes would go here
 
-echo "Inigo patch phase completed"
+log_success "Inigo patch phase completed"

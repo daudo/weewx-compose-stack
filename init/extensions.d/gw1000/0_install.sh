@@ -7,11 +7,14 @@ set -e
 # Environment variables for configuration
 ENABLE_GW1000_DRIVER=${ENABLE_GW1000_DRIVER:-true}
 
-echo "Installing GW1000 driver..."
+# Source common utilities
+source /init/common.sh
+
+log_info "Installing GW1000 driver..."
 
 # Skip if disabled
 if [ "$ENABLE_GW1000_DRIVER" != "true" ]; then
-    echo "GW1000 driver installation disabled (ENABLE_GW1000_DRIVER=$ENABLE_GW1000_DRIVER)"
+    log_info "GW1000 driver installation disabled (ENABLE_GW1000_DRIVER=$ENABLE_GW1000_DRIVER)"
     return 0 2>/dev/null || exit 0
 fi
 
@@ -21,22 +24,22 @@ DRIVER_DEST="/data/bin/user/gw1000.py"
 
 # Check if weewx.conf exists
 if [ ! -f "/data/weewx.conf" ]; then
-    echo "ERROR: weewx.conf not found. Please run WeeWX configuration setup first."
+    log_error "weewx.conf not found. Please run WeeWX configuration setup first."
     exit 1
 fi
 
 # Ensure required directories exist
-echo "Creating user directory structure..."
+log_info "Creating user directory structure..."
 mkdir -p /data/bin/user
 
 # Copy GW1000 driver if it doesn't exist
 if [ ! -f "$DRIVER_DEST" ]; then
-    echo "Installing GW1000 driver from $DRIVER_SOURCE..."
+    log_info "Installing GW1000 driver from $DRIVER_SOURCE..."
     cp "$DRIVER_SOURCE" "$DRIVER_DEST"
     chmod +x "$DRIVER_DEST"
-    echo "GW1000 driver installed successfully at $DRIVER_DEST"
+    log_success "GW1000 driver installed successfully at $DRIVER_DEST"
 else
-    echo "GW1000 driver already exists at $DRIVER_DEST, skipping installation"
+    log_info "GW1000 driver already exists at $DRIVER_DEST, skipping installation"
 fi
 
-echo "GW1000 driver installation phase completed"
+log_success "GW1000 driver installation phase completed"

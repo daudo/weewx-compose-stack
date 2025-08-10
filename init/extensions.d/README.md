@@ -40,38 +40,62 @@ Extensions are processed alphabetically by directory name, with each extension r
 3. Customize each phase script:
 
 ### Phase 0: Installation (`0_install.sh`)
+
 ```bash
 #!/bin/bash
 set -e
+
+# Source common utilities
+source /init/common.sh
 
 EXTENSION_VERSION=${EXTENSION_VERSION:-1.0.0}
 ENABLE_EXTENSION=${ENABLE_EXTENSION:-true}
 
 # Skip if disabled
 if [ "$ENABLE_EXTENSION" != "true" ]; then
+    log_info "Extension disabled (ENABLE_EXTENSION=false)"
     return 0 2>/dev/null || exit 0
 fi
 
+log_info "Installing extension v$EXTENSION_VERSION..."
 # Installation logic here...
 weectl extension install "$EXTENSION_URL" --config=/data/weewx.conf --yes
+log_success "Extension installation completed"
 ```
 
-### Phase 1: Patching (`1_patch.sh`) 
+### Phase 1: Patching (`1_patch.sh`)
+
 ```bash  
 #!/bin/bash
 set -e
 
-# Apply fixes for upstream bugs
-# Copy missing files, apply compatibility patches, etc.
+# Source common utilities
+source /init/common.sh
+
+log_info "Applying patches for extension..."
+
+# Apply patches using shared function
+apply_patch_files
+
+# Custom file operations if needed
+log_success "Extension patch phase completed"
 ```
 
 ### Phase 2: Configuration (`2_configure.sh`)
+
 ```bash
 #!/bin/bash
 set -e
 
+# Source common utilities  
+source /init/common.sh
+
+log_info "Configuring extension..."
+
 # Configure using environment variables and weewx_config_api
 /init/weewx_config_api.py set-value "[Section]" "key" "$ENVIRONMENT_VAR"
+
+log_success "Extension configuration completed"
 ```
 
 ## Templates Directory
@@ -83,23 +107,46 @@ The `examples/extensions.d/` directory (in project root) contains starter script
 - **`2_configure.sh`** - Template for environment-driven configuration
 
 **Usage:**
+
 1. Copy the template scripts from `examples/extensions.d/` to your new extension directory
-2. Customize the environment variables and logic for your extension
-3. Make scripts executable: `chmod +x extension-name/*.sh`
+2. **All templates automatically source `common.sh`** for shared utilities and consistent logging
+3. Customize the environment variables and logic for your extension
+4. Make scripts executable: `chmod +x extension-name/*.sh`
+
+## Common.sh Integration
+
+All extension scripts have access to shared functions from `init/common.sh`:
+
+### Logging Functions
+
+- `log_info "message"` - ℹ Informational messages  
+- `log_success "message"` - ✓ Success confirmations
+- `log_warning "message"` - ⚠ Non-critical warnings
+- `log_error "message"` - ✗ Errors and failures
+
+### Utilities  
+
+- `apply_patch_files()` - Enhanced patch application with ordering and conflict detection
+- `manage_backups init|cleanup|restore|all` - Configuration backup management
+
+Extensions should use these functions for consistent status reporting across the entire system.
 
 ## Benefits of 3-Phase Architecture
 
-### ✅ **Separation of Concerns**
+### **Separation of Concerns**
+
 - **Install**: Pure extension installation logic
 - **Patch**: Fix upstream bugs independently  
 - **Configure**: Environment-driven setup
 
-### ✅ **Better Maintainability**
+### **Better Maintainability**
+
 - **Easier debugging**: Test each phase independently
 - **Clearer code**: Single responsibility per script
 - **Easier updates**: Modify only relevant phase
 
-### ✅ **Scalability**
+### **Scalability**
+
 - **Consistent pattern**: All extensions follow same structure
 - **Predictable**: Always know where to find install/patch/config logic
 - **Flexible**: Phases can be skipped if not needed

@@ -9,13 +9,16 @@ EXTENSION_NAME="${EXTENSION_NAME:-ExtensionName}"
 EXTENSION_VERSION="${EXTENSION_VERSION:-1.0.0}"
 ENABLE_EXTENSION="${ENABLE_EXTENSION:-true}"
 
+# Source common utilities
+source "$(dirname "$0")/../../common.sh"
+
 # Skip if extension is disabled
 if [ "$ENABLE_EXTENSION" != "true" ]; then
-    echo "$EXTENSION_NAME disabled (ENABLE_EXTENSION=false)"
+    log_info "$EXTENSION_NAME disabled (ENABLE_EXTENSION=false)"
     return 0 2>/dev/null || exit 0
 fi
 
-echo "Installing $EXTENSION_NAME extension v$EXTENSION_VERSION..."
+log_info "Installing $EXTENSION_NAME extension v$EXTENSION_VERSION..."
 
 # Function to check if extension is installed and get version
 check_extension_version() {
@@ -28,28 +31,28 @@ INSTALLED_VERSION=$(check_extension_version "$EXTENSION_NAME")
 
 # Handle version updates
 if [ -n "$INSTALLED_VERSION" ] && [ "$INSTALLED_VERSION" != "$EXTENSION_VERSION" ]; then
-    echo "Updating $EXTENSION_NAME: $INSTALLED_VERSION → $EXTENSION_VERSION"
+    log_info "Updating $EXTENSION_NAME: $INSTALLED_VERSION → $EXTENSION_VERSION"
     weectl extension uninstall "$EXTENSION_NAME" --config=/data/weewx.conf --yes
     INSTALLED_VERSION=""
 fi
 
 # Install if not present or after uninstall
 if [ -z "$INSTALLED_VERSION" ]; then
-    echo "Installing $EXTENSION_NAME v$EXTENSION_VERSION..."
+    log_info "Installing $EXTENSION_NAME v$EXTENSION_VERSION..."
     
     # TODO: Replace with actual extension URL/source
     EXTENSION_URL="https://github.com/example/extension/releases/download/v${EXTENSION_VERSION}/extension.tar.gz"
     
     # Install extension
-    echo "Installing from: $EXTENSION_URL"
+    log_info "Installing from: $EXTENSION_URL"
     if weectl extension install "$EXTENSION_URL" --config=/data/weewx.conf --yes; then
-        echo "$EXTENSION_NAME v$EXTENSION_VERSION installation successful"
+        log_success "$EXTENSION_NAME v$EXTENSION_VERSION installation successful"
     else
-        echo "Error: $EXTENSION_NAME installation failed"
+        log_error "$EXTENSION_NAME installation failed"
         return 1 2>/dev/null || exit 1
     fi
 else
-    echo "$EXTENSION_NAME v$EXTENSION_VERSION already installed"
+    log_info "$EXTENSION_NAME v$EXTENSION_VERSION already installed"
 fi
 
-echo "$EXTENSION_NAME installation phase completed"
+log_success "$EXTENSION_NAME installation phase completed"

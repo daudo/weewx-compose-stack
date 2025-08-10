@@ -1,0 +1,26 @@
+# Fix Python 3.13 Regex Escape Sequence Warning in Belchertown
+#
+# Issue: SyntaxWarning: invalid escape sequence '\.'
+# Error: "/data/bin/user/belchertown.py:1680: SyntaxWarning: invalid escape sequence '\.'
+#        "(?P<distance>[0-9]*\.?[0-9]+) km(?P<rest>.*)$","
+# 
+# Fix: Use raw string r"..." to properly escape regex patterns
+# Location: Line ~1680 in earthquake distance parsing function
+# Affects: Distance unit conversion for earthquake data display
+#
+# Background:
+# - Python 3.13 is stricter about escape sequences in regular strings
+# - \. in a regular string should be \\. or use raw string r"..."
+# - Raw strings treat backslashes literally, perfect for regex patterns
+#
+--- bin/user/belchertown.py.orig	2025-08-10 17:26:15.512724096 +0200
++++ bin/user/belchertown.py	2025-08-10 17:26:27.496805609 +0200
+@@ -1677,7 +1677,7 @@
+                     else:  # assume miles
+                         try:
+                             eqmatched = match(
+-                                "(?P<distance>[0-9]*\\.?[0-9]+) km(?P<rest>.*)$",
++                                r"(?P<distance>[0-9]*\.?[0-9]+) km(?P<rest>.*)$",
+                                 eqdata["features"][0]["properties"]["place"],
+                             )
+                             eqdist_km = eqmatched.group("distance")

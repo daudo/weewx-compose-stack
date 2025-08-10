@@ -4,28 +4,10 @@ set -e
 # Belchertown Skin Patching Script
 # This script applies patches and fixes upstream bugs using a hybrid approach
 
-echo "Applying patches for Belchertown skin..."
+# Source common utilities
+source "$(dirname "$0")/../../common.sh"
 
-# 1. Apply code patches using patch files
-apply_patch_files() {
-    local patch_dir="$(dirname "$0")/patches"
-    
-    if [ -d "$patch_dir" ]; then
-        echo "Applying patch files from $patch_dir"
-        for patch_file in "$patch_dir"/*.patch; do
-            if [ -f "$patch_file" ]; then
-                echo "Applying $(basename "$patch_file")..."
-                if patch -p0 -d /data < "$patch_file"; then
-                    echo "Successfully applied $(basename "$patch_file")"
-                else
-                    echo "Warning: Failed to apply $(basename "$patch_file")"
-                fi
-            fi
-        done
-    else
-        echo "No patches directory found at $patch_dir"
-    fi
-}
+log_info "Applying patches for Belchertown skin..."
 
 # 2. Handle file additions/corrections with simple operations
 copy_missing_language_files() {
@@ -70,4 +52,4 @@ copy_missing_language_files() {
 apply_patch_files
 copy_missing_language_files
 
-echo "Belchertown patch phase completed"
+log_success "Belchertown patch phase completed"

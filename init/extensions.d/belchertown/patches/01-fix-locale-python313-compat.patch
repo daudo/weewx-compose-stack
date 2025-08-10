@@ -1,0 +1,23 @@
+# Python 3.13 Locale Compatibility Fix for Belchertown
+#
+# Issue: locale.format() method was removed in Python 3.13
+# Error: AttributeError: module 'locale' has no attribute 'format'
+# 
+# Fix: Add monkeypatch to restore locale.format functionality
+# Location: After locale import (around line 15)
+# Affects: All currency and number formatting in Belchertown skin
+#
+# References:
+# - https://docs.python.org/3.13/whatsnew/3.13.html#locale
+# - Python 3.13 removed locale.format in favor of locale.format_string
+#
+--- bin/user/belchertown.py.orig	2025-08-10 17:25:15.512724096 +0200
++++ bin/user/belchertown.py	2025-08-10 17:25:27.496805609 +0200
+@@ -13,6 +13,7 @@
+ import datetime
+ import json
+ import locale
++locale.format = locale.format_string  # Python 3.13 compatibility
+ import os
+ import os.path
+ import sys

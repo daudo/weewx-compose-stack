@@ -4,7 +4,7 @@ set -e
 echo "=== WeeWX Configuration Setup ==="
 
 # Create initial backup before any changes
-source /init/backup-config.sh
+source /init/common.sh
 manage_backups init
 
 # Check if weewx.conf already exists

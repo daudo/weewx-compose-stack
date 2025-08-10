@@ -4,7 +4,10 @@ set -e
 # Belchertown Skin Configuration Script
 # This script configures the Belchertown skin using environment variables and weewx_config_api
 
-echo "Configuring Belchertown skin..."
+# Source common utilities  
+source /init/common.sh
+
+log_info "Configuring Belchertown skin..."
 
 # Function to generate short name from location (first letters of each word)
 generate_short_name() {
@@ -21,31 +24,31 @@ generate_short_name() {
 # Configure Belchertown as default skin if WEEWX_SKIN is set to Belchertown
 configure_default_skin() {
     if [ -n "$WEEWX_SKIN" ] && [ "$WEEWX_SKIN" = "Belchertown" ]; then
-        echo "Configuring Belchertown as default skin with Seasons in subfolder..."
+        log_info "Configuring Belchertown as default skin with Seasons in subfolder..."
         
         # Set HTML_ROOT for Belchertown skin to public_html (main website root)
         /init/weewx_config_api.py set-value "[StdReport][Belchertown]" "HTML_ROOT" "public_html"
-        echo "Set [[Belchertown]] HTML_ROOT = public_html"
+        log_success "Set [[Belchertown]] HTML_ROOT = public_html"
         
         # Move Seasons to subfolder
         /init/weewx_config_api.py set-value "[StdReport][SeasonsReport]" "HTML_ROOT" "public_html/seasons"
-        echo "Moved Seasons to public_html/seasons/"
+        log_success "Moved Seasons to public_html/seasons/"
         
-        echo "Belchertown configured as main skin, Seasons available at /seasons/"
+        log_success "Belchertown configured as main skin, Seasons available at /seasons/"
     fi
 }
 
 # Configure Belchertown skin options using environment variables
 configure_belchertown_options() {
     if [ -f "/data/weewx.conf" ] && [ -n "$WEEWX_LOCATION" ]; then
-        echo "Configuring Belchertown skin options from environment variables..."
+        log_info "Configuring Belchertown skin options from environment variables..."
         
         # Generate short name for manifest
         local MANIFEST_SHORT_NAME=$(generate_short_name "$WEEWX_LOCATION")
         
         # Check if Belchertown section exists (created by extension installation)
         if /init/weewx_config_api.py has-section "[StdReport][Belchertown]"; then
-            echo "Found existing [[Belchertown]] section, configuring options..."
+            log_info "Found existing [[Belchertown]] section, configuring options..."
             
             # Remove existing [[[Extras]]] section and recreate it cleanly
             /init/weewx_config_api.py remove-section "[StdReport][Belchertown][Extras]"
@@ -63,10 +66,10 @@ configure_belchertown_options() {
                 "footer_copyright_text=$WEEWX_LOCATION Website" \
                 "powered_by=Observations are powered by $WEEWX_VERBOSE_HARDWARE"
             
-            echo "Belchertown skin configuration completed:"
-            echo "  - site_title: $WEEWX_LOCATION"
-            echo "  - manifest_name: $WEEWX_LOCATION"
-            echo "  - manifest_short_name: $MANIFEST_SHORT_NAME"
+            log_success "Belchertown skin configuration completed:"
+            log_info "  - site_title: $WEEWX_LOCATION"
+            log_info "  - manifest_name: $WEEWX_LOCATION"
+            log_info "  - manifest_short_name: $MANIFEST_SHORT_NAME"
             echo "  - home_page_header: $WEEWX_LOCATION Website"
             echo "  - footer_copyright_text: $WEEWX_LOCATION Website"
             echo "  - powered_by: Observations are powered by $WEEWX_VERBOSE_HARDWARE"
@@ -106,16 +109,16 @@ configure_belchertown_options
 configure_belchertown_locale
 
 # Validate final configuration
-echo "Validating final configuration..."
+log_info "Validating final configuration..."
 if /init/weewx_config_api.py validate; then
     echo "Configuration validation successful"
 else
     echo "Warning: Configuration validation failed - there may be syntax errors"
     # Try to restore from backup if validation fails
-    source /init/backup-config.sh
+    source /init/common.sh
     if manage_backups restore; then
         echo "Configuration restored from backup after validation failure"
     fi
 fi
 
-echo "Belchertown configuration phase completed"
+log_success "Belchertown configuration phase completed"

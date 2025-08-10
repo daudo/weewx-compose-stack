@@ -8,13 +8,16 @@ set -e
 BELCHERTOWN_VERSION=${BELCHERTOWN_VERSION:-1.4}
 ENABLE_BELCHERTOWN_SKIN=${ENABLE_BELCHERTOWN_SKIN:-true}
 
+# Source common utilities
+source /init/common.sh
+
 # Skip if extension is disabled
 if [ "$ENABLE_BELCHERTOWN_SKIN" != "true" ]; then
-    echo "Belchertown skin disabled (ENABLE_BELCHERTOWN_SKIN=false)"
+    log_info "Belchertown skin disabled (ENABLE_BELCHERTOWN_SKIN=false)"
     return 0 2>/dev/null || exit 0
 fi
 
-echo "Installing Belchertown skin v$BELCHERTOWN_VERSION..."
+log_info "Installing Belchertown skin v$BELCHERTOWN_VERSION..."
 
 # Function to check if extension is installed and get version
 check_extension_version() {
@@ -27,38 +30,38 @@ INSTALLED_BELCHERTOWN_VERSION=$(check_extension_version "Belchertown")
 
 # Handle version updates
 if [ -n "$INSTALLED_BELCHERTOWN_VERSION" ] && [ "$INSTALLED_BELCHERTOWN_VERSION" != "$BELCHERTOWN_VERSION" ]; then
-    echo "Updating Belchertown skin: $INSTALLED_BELCHERTOWN_VERSION → $BELCHERTOWN_VERSION"
+    log_info "Updating Belchertown skin: $INSTALLED_BELCHERTOWN_VERSION → $BELCHERTOWN_VERSION"
     weectl extension uninstall Belchertown --config=/data/weewx.conf --yes
     INSTALLED_BELCHERTOWN_VERSION=""
 fi
 
 # Install if not present or after uninstall
 if [ -z "$INSTALLED_BELCHERTOWN_VERSION" ]; then
-    echo "Installing Belchertown skin v$BELCHERTOWN_VERSION..."
+    log_info "Installing Belchertown skin v$BELCHERTOWN_VERSION..."
     BELCHERTOWN_URL="https://github.com/poblabs/weewx-belchertown/releases/download/weewx-belchertown-${BELCHERTOWN_VERSION}/weewx-belchertown-release.${BELCHERTOWN_VERSION}.tar.gz"
     BELCHERTOWN_FILE="/tmp/belchertown-current.tar.gz"
 
     # Download the tar.gz file first
-    echo "Downloading from: $BELCHERTOWN_URL"
+    log_info "Downloading from: $BELCHERTOWN_URL"
     if wget -q -O "$BELCHERTOWN_FILE" "$BELCHERTOWN_URL"; then
-        echo "Belchertown skin downloaded successfully"
+        log_success "Belchertown skin downloaded successfully"
     else
-        echo "Error: Failed to download Belchertown skin"
+        log_error "Failed to download Belchertown skin"
         return 1 2>/dev/null || exit 1
     fi
 
     # Install extension from downloaded local file
-    echo "Installing from downloaded file: $BELCHERTOWN_FILE"
+    log_info "Installing from downloaded file: $BELCHERTOWN_FILE"
     if weectl extension install "$BELCHERTOWN_FILE" --config=/data/weewx.conf --yes; then
-        echo "Belchertown skin installation successful"
+        log_success "Belchertown skin installation successful"
     else
-        echo "Error: Belchertown skin installation failed"
+        log_error "Belchertown skin installation failed"
         return 1 2>/dev/null || exit 1
     fi
     
-    echo "Belchertown skin v$BELCHERTOWN_VERSION installed successfully"
+    log_success "Belchertown skin v$BELCHERTOWN_VERSION installed successfully"
 else
-    echo "Belchertown skin v$BELCHERTOWN_VERSION already installed"
+    log_info "Belchertown skin v$BELCHERTOWN_VERSION already installed"
 fi
 
-echo "Belchertown installation phase completed"
+log_success "Belchertown installation phase completed"
