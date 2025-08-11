@@ -19,12 +19,12 @@ fix_missing_files() {
     # Example: Copy missing files from downloaded archive
     # This is useful when upstream installation is incomplete
     
-    echo "Checking for missing files..."
+    log_info "Checking for missing files..."
     
     # Add your file operation logic here
     # Example:
     # if [ ! -f "/data/expected/file.txt" ]; then
-    #     echo "Copying missing file..."
+    #     log_info "Copying missing file..."
     #     cp "/tmp/source/file.txt" "/data/expected/file.txt"
     # fi
 }

@@ -10,29 +10,18 @@ Built on [felddy/weewx-docker](https://github.com/felddy/weewx-docker) container
 
 ### 1. Prepare Environment Variables
 
-In Portainer, when creating the stack, set these environment variables:
+In Portainer, when creating the stack, set the required environment variables. For a complete reference of all available variables, see **[EXTENSIONS.md](EXTENSIONS.md)**.
 
-| Variable | Description | Default Value | Required |
-|----------|-------------|---------------|----------|
-| `GW1000_IP` | IP address of your GW1000 gateway | `192.168.1.10` | Yes |
-| `NGINX_PORT` | External port for web interface | `8080` | Yes |
-| `WEEWX_LOCATION` | Weather station location description | `Home Weather Station` | Yes |
-| `WEEWX_LATITUDE` | Station latitude in decimal degrees | `40.7128` (NYC) | Yes |
-| `WEEWX_LONGITUDE` | Station longitude in decimal degrees | `-74.0060` (NYC) | Yes |
-| `WEEWX_ALTITUDE` | Station altitude with unit | `100, foot` | Yes |
-| `WEEWX_STATION_URL` | Website URL for your station | _(empty)_ | No |
-| `WEEWX_RAIN_YEAR_START` | Month when rain year starts (1-12) | `1` (January) | Yes |
-| `WEEWX_WEEK_START` | First day of week (0=Mon, 6=Sun) | `6` (Sunday) | Yes |
-| `WEEWX_UNIT_SYSTEM` | Unit system for web interface | `metric` | Yes |
+**Essential Variables for GW1000/EcoWitt Users:**
 
-**Important Notes:**
+- `GW1000_IP` - IP address of your weather station gateway
+- `NGINX_PORT` - External port for web interface (default: 8080)  
+- `WEEWX_LOCATION` - Weather station location description
+- `WEEWX_LATITUDE` - Station latitude in decimal degrees
+- `WEEWX_LONGITUDE` - Station longitude in decimal degrees
+- `WEEWX_ALTITUDE` - Station altitude with unit (format: "number, unit")
 
-- **Latitude/Longitude**: Use decimal degrees, negative for south/west hemispheres
-- **Altitude**: Format must be "number, unit" where unit is either "foot" or "meter"
-- **Station URL**: Must start with `http://` or `https://` if provided
-- **Rain Year Start**: 1=January, 10=October, etc.
-- **Week Start**: 0=Monday, 1=Tuesday, ..., 6=Sunday
-- **Unit System**: `us` (Fahrenheit, inches), `metric` (Celsius, mm), or `metricwx` (meteorological metric)
+**Configuration Details**: For complete environment variable reference, extension details, and configuration options, see **[EXTENSIONS.md](EXTENSIONS.md)**.
 
 ### 2. Deploy Stack
 
@@ -42,17 +31,8 @@ In Portainer, when creating the stack, set these environment variables:
    1. Repository URL: https://github.com/daudo/weewx-compose-stack
    2. Repository Reference: refs/heads/main
    3. Compose path: **docker-compose.yml**
-4. Scroll down to **Environment variables** and add:
-   - `GW1000_IP=192.168.1.10` (adjust to your device's IP)
-   - `NGINX_PORT=8080` (adjust to desired port)
-   - `WEEWX_LOCATION=My Cosy Weather Station` (describe your location)
-   - `WEEWX_LATITUDE=47.2626` (your latitude in decimal degrees)
-   - `WEEWX_LONGITUDE=11.3945` (your longitude in decimal degrees)
-   - `WEEWX_ALTITUDE=587, meter` (your altitude with unit)
-   - `WEEWX_STATION_URL=https://myweather.example.com` (optional)
-   - `WEEWX_RAIN_YEAR_START=10` (optional, eg. 10 = October starts the rain year)
-   - `WEEWX_WEEK_START=0` (optional, 0=Monday, 6=Sunday)
-   - `WEEWX_UNIT_SYSTEM=metric` (optional, metric for Celsius/mm, us for Fahrenheit/inches)
+4. Scroll down to **Environment variables** and add the essential variables listed above
+   - See **[EXTENSIONS.md](EXTENSIONS.md)** for complete variable reference and configuration details
 5. Click **Deploy the stack**
 
 **Note**: The docker-compose.yml file uses volume-based configuration copying to ensure compatibility with both local Docker Compose and Portainer deployments.
@@ -65,9 +45,10 @@ On first deployment, the stack runs in two stages:
    - Generate initial WeeWX configuration (`weewx.conf`)
    - Apply environment variable configuration to station settings
    - Install the GW1000 driver to shared volume
+   - Install and configure WeeWX extensions (Inigo, Belchertown)
    - Install nginx configuration to shared volume  
    - Configure WeeWX for your GW1000 device
-   - Set up sensor data collection
+   - Set up sensor data collection and language settings
    - Exit successfully (code 0)
 
 2. **weewx** container starts normally and:
@@ -99,7 +80,7 @@ On first deployment, the stack runs in two stages:
 ### weewx-init
 
 - **Purpose**: Unified one-time setup container
-- **Function**: Creates WeeWX configuration, installs GW1000 driver, sets up nginx config
+- **Function**: Creates WeeWX configuration, installs GW1000 driver, installs extensions, sets up nginx config
 - **Lifecycle**: Runs once per stack deployment
 - **Dependencies**: None
 
@@ -147,7 +128,7 @@ If you need to change your environment variables after initial deployment:
 
 1. Update your environment variables in Portainer (Stack → weewx5 → Environment variables)
 2. Click **Pull and redeploy**
-3. The weewx-init container will run again and apply the new settings
+3. The weewx-init container will run again and apply the new settings (including extension updates)
 
 ### Method 2: Manual Configuration Update (Docker Compose only)
 

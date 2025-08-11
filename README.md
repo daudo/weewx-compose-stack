@@ -38,7 +38,7 @@ If you have for example an EcoWitt WS90 weather station connected to a GW1000 co
    ```bash
    # Copy and edit environment configuration
    cp .env.example .env
-   # Edit .env file to set your GW1000 IP, location, coordinates, etc.
+   # Edit .env file - see EXTENSIONS.md for complete variable reference
    
    # Deploy the stack
    docker compose up -d
@@ -86,6 +86,8 @@ This Docker Compose stack provides a 3-container architecture with unified initi
 ## Documentation
 
 - **[README-PORTAINER.md](README-PORTAINER.md)** - Complete Portainer deployment guide
+- **[EXTENSIONS.md](EXTENSIONS.md)** - Extension catalog and environment variable reference
+- **[examples/README.md](examples/README.md)** - Extension integration guide
 - **[GW1000 driver Wiki](https://web.archive.org/web/20250306211021/https://github.com/gjr80/weewx-gw1000/wiki)** - partially archived Wiki for the GW1000 driver on the Internet Archive
 
 ## Comparison with Base WeeWX Docker
