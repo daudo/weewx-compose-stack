@@ -16,15 +16,20 @@ COPY nginx/nginx.conf /tmp/nginx.conf
 
 # Copy modular initialization scripts and make them executable
 COPY --chmod=755 init/configure-weewx.sh /init/configure-weewx.sh
-COPY --chmod=755 init/install-gw1000.sh /init/install-gw1000.sh
 COPY --chmod=755 init/install-extensions.sh /init/install-extensions.sh
 COPY --chmod=755 init/setup-nginx.sh /init/setup-nginx.sh
-COPY --chmod=755 init/backup-config.sh /init/backup-config.sh
-COPY --chmod=755 init/python313-compat.sh /init/python313-compat.sh
-COPY --chmod=755 init/init-weewx-unified.sh /init/init-weewx-unified.sh
+COPY --chmod=644 init/common.sh /init/common.sh
+COPY --chmod=755 init/weewx_config_api.py /init/weewx_config_api.py
+COPY --chmod=755 init/init-weewx.sh /init/init-weewx.sh
 
-# Copy extension scripts directory
-COPY --chmod=755 init/extensions.d/ /init/extensions.d/
+# Copy extension scripts with appropriate permissions
+COPY init/extensions.d/ /init/extensions.d/
+
+# Set proper permissions for extension files
+RUN find /init/extensions.d -name "*.sh" -exec chmod 755 {} \; && \
+    find /init/extensions.d -name "*.md" -exec chmod 644 {} \; && \
+    find /init/extensions.d -name "*.patch" -exec chmod 644 {} \; && \
+    find /init/extensions.d -type d -exec chmod 755 {} \;
 
 # Switch back to weewx user
 USER weewx
@@ -36,4 +41,4 @@ ENV PYTHONPATH=/data/lib/python/site-packages
 
 # Override the base image's entrypoint and command
 ENTRYPOINT []
-CMD ["/init/init-weewx-unified.sh"]
+CMD ["/init/init-weewx.sh"]

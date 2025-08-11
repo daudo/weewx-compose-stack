@@ -9,7 +9,7 @@ services:
   weewx-init:
     build:
       context: .
-      dockerfile: init/Dockerfile.unified
+      dockerfile: Dockerfile.init
     volumes:
       - weewx_data:/data
     environment:
@@ -17,6 +17,7 @@ services:
       - PIP_TARGET=/data/lib/python/site-packages
       - PYTHONPATH=/data/lib/python/site-packages
       - WEEWX_LOCATION=${WEEWX_LOCATION:-My Cosy Weather Station}
+      - WEEWX_VERBOSE_HARDWARE=${WEEWX_VERBOSE_HARDWARE:-Personal Weather Station}
       - WEEWX_LATITUDE=${WEEWX_LATITUDE:-42.2627}
       - WEEWX_LONGITUDE=${WEEWX_LONGITUDE:-11.3945}
       - "WEEWX_ALTITUDE=${WEEWX_ALTITUDE:-587, meter}"
@@ -25,8 +26,9 @@ services:
       - WEEWX_WEEK_START=${WEEWX_WEEK_START:-0}
       - WEEWX_UNIT_SYSTEM=${WEEWX_UNIT_SYSTEM:-metric}
       - WEEWX_LANGUAGE=${WEEWX_LANGUAGE:-en}
-      - GW1000_IP=${GW1000_IP:-192.168.1.10}
       # Extension configuration
+      - ENABLE_GW1000_DRIVER=${ENABLE_GW1000_DRIVER:-true}
+      - GW1000_IP=${GW1000_IP:-192.168.1.10}
       - ENABLE_INIGO_EXTENSION=${ENABLE_INIGO_EXTENSION:-true}
       - INIGO_VERSION=${INIGO_VERSION:-1.0.17}
       - ENABLE_BELCHERTOWN_SKIN=${ENABLE_BELCHERTOWN_SKIN:-true}
@@ -35,9 +37,11 @@ services:
     restart: "no"
     # This container handles all initialization: weewx.conf, GW1000 driver, and nginx config
 
-  # Run WeeWX normally
+  # Run WeeWX normally with locale support
   weewx:
-    image: felddy/weewx:5
+    build:
+      context: .
+      dockerfile: Dockerfile.runtime
     depends_on:
       weewx-init:
         condition: service_completed_successfully

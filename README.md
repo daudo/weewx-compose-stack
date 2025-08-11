@@ -86,6 +86,7 @@ This Docker Compose stack provides a 3-container architecture with unified initi
 ## Documentation
 
 - **[README-PORTAINER.md](README-PORTAINER.md)** - Complete Portainer deployment guide
+- **[GW1000 driver Wiki](https://web.archive.org/web/20250306211021/https://github.com/gjr80/weewx-gw1000/wiki)** - partially archived Wiki for the GW1000 driver on the Internet Archive
 
 ## Comparison with Base WeeWX Docker
 

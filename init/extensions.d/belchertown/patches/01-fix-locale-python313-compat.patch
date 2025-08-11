@@ -1,0 +1,10 @@
+--- bin/user/belchertown.py.orig	2025-08-10 17:25:15.512724096 +0200
++++ bin/user/belchertown.py	2025-08-10 17:25:27.496805609 +0200
+@@ -13,6 +13,7 @@
+ import datetime
+ import json
+ import locale
++locale.format = locale.format_string  # Python 3.13 compatibility
+ import os
+ import os.path
+ import sys
