@@ -26,8 +26,11 @@ configure_default_skin() {
     if [ -n "$WEEWX_SKIN" ] && [ "$WEEWX_SKIN" = "Belchertown" ]; then
         log_info "Configuring Belchertown as default skin with Seasons in subfolder..."
         
-        # Set HTML_ROOT for Belchertown skin to public_html (main website root)
-        /init/weewx_config_api.py set-value "[StdReport][Belchertown]" "HTML_ROOT" "public_html"
+        # Set skin and HTML_ROOT for Belchertown skin to public_html (main website root)
+        /init/weewx_config_api.py set-multiple-values "[StdReport][Belchertown]" \
+            "skin=Belchertown" \
+            "HTML_ROOT=public_html"
+        log_success "Set [[Belchertown]] skin = Belchertown"
         log_success "Set [[Belchertown]] HTML_ROOT = public_html"
         
         # Move Seasons to subfolder
