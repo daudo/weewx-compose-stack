@@ -96,11 +96,10 @@ class WeewxConfigManager:
         value_str = str(value)
         
         if force_quotes:
-            # Force quotes around the value for cases like moment.js format strings
-            if not (value_str.startswith('"') and value_str.endswith('"')):
-                section[key] = f'"{value_str}"'
-            else:
-                section[key] = value_str
+            # For values that need to be quoted (like moment.js format strings)
+            # Just store the value normally - ConfigObj will automatically quote it
+            # when writing if it contains spaces, commas, or special characters
+            section[key] = value_str
         elif ',' in value_str:
             # Convert comma-separated values to lists for WeeWX compatibility
             # This prevents ConfigObj from adding quotes around comma-containing values
