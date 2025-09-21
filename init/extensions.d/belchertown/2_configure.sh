@@ -51,7 +51,9 @@ configure_belchertown_options() {
             log_info "Found existing [[Belchertown]] section, configuring options..."
             
             # Remove existing [[[Extras]]] section and recreate it cleanly
-            /init/weewx_config_api.py remove-section "[StdReport][Belchertown][Extras]"
+            if /init/weewx_config_api.py has-section "[StdReport][Belchertown][Extras]"; then
+                /init/weewx_config_api.py remove-section "[StdReport][Belchertown][Extras]"
+            fi
             /init/weewx_config_api.py create-section "[StdReport][Belchertown][Extras]"
             
             # Set Belchertown Extras options (for manifest and site title)
