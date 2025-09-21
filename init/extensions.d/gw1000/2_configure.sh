@@ -16,9 +16,9 @@ GW1000_IP="${GW1000_IP:-192.168.1.10}"
 configure_gw1000_driver() {
     log_info "Setting up GW1000 driver configuration..."
     
-    # Check if GW1000 configuration already exists
-    if /init/weewx_config_api.py has-section "[GW1000]"; then
-        log_info "GW1000 configuration already exists in weewx.conf"
+    # Check if GW1000 driver configuration already exists
+    if /init/weewx_config_api.py has-section "[GW1000]" && /init/weewx_config_api.py has-key "[GW1000]" "ip_address"; then
+        log_info "GW1000 driver configuration already exists in weewx.conf"
         
         # Update IP address if it has changed
         current_ip=$(/init/weewx_config_api.py get-value "[GW1000]" "ip_address")
@@ -27,16 +27,20 @@ configure_gw1000_driver() {
             /init/weewx_config_api.py set-value "[GW1000]" "ip_address" "$GW1000_IP"
         fi
     else
-        log_info "Adding GW1000 configuration to weewx.conf..."
+        log_info "Adding GW1000 driver configuration to weewx.conf..."
         
-        # Create GW1000 section and set all values using generic API
-        /init/weewx_config_api.py create-section "[GW1000]"
+        # Create GW1000 section if it doesn't exist (may exist from patch phase)
+        if ! /init/weewx_config_api.py has-section "[GW1000]"; then
+            /init/weewx_config_api.py create-section "[GW1000]"
+        fi
+        
+        # Set driver configuration values
         /init/weewx_config_api.py set-multiple-values "[GW1000]" \
             "poll_interval=20" \
             "ip_address=$GW1000_IP" \
             "driver=user.gw1000"
 
-        log_success "GW1000 configuration added successfully"
+        log_success "GW1000 driver configuration added successfully"
     fi
 }
 
