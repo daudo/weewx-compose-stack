@@ -17,13 +17,13 @@ patch_piezo_rain_mapping() {
     if [ "$GW1000_USE_PIEZO_RAIN" = "true" ]; then
         log_info "Patching GW1000 driver for piezo rain field mapping..."
         
-        # Create GW1000 field_map section for piezo rain
-        # This "patches" the driver's default field mapping behavior
-        /init/weewx_config_api.py create-section "[GW1000][field_map]"
+        # Use field_map_extensions instead of overriding entire field_map
+        # This preserves all other sensor mappings while only changing rain fields
+        /init/weewx_config_api.py create-section "[GW1000][field_map_extensions]"
         
-        # Map standard WeeWX rain fields to piezo rain fields
+        # Map standard WeeWX rain fields to piezo rain fields using extensions
         # This fixes the upstream limitation where piezo data doesn't map to standard fields
-        /init/weewx_config_api.py set-multiple-values "[GW1000][field_map]" \
+        /init/weewx_config_api.py set-multiple-values "[GW1000][field_map_extensions]" \
             "rain=p_rain" \
             "rainRate=p_rainrate" \
             "stormRain=p_rainevent" \
@@ -35,14 +35,13 @@ patch_piezo_rain_mapping() {
         log_success "Piezo rain field mapping patch applied"
         log_info "  - Standard 'rain' field now mapped to piezo 'p_rain'"
         log_info "  - Standard 'rainRate' field now mapped to piezo 'p_rainrate'"
-        log_info "  - This fixes the issue where piezo sensors don't populate standard rain fields"
     else
         log_info "Piezo rain patch disabled (GW1000_USE_PIEZO_RAIN=false)"
         
-        # Remove custom field mapping if it exists (restore driver defaults)
+        # Remove field mapping extensions if they exist (restore driver defaults)
         # This ensures clean state when switching back to traditional rain gauges
-        if /init/weewx_config_api.py has-section "[GW1000][field_map]"; then
-            /init/weewx_config_api.py remove-section "[GW1000][field_map]"
+        if /init/weewx_config_api.py has-section "[GW1000][field_map_extensions]"; then
+            /init/weewx_config_api.py remove-section "[GW1000][field_map_extensions]"
             log_info "Removed piezo rain field mapping patch, using driver defaults"
         fi
     fi
