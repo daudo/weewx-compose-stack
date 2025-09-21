@@ -135,7 +135,7 @@ configure_belchertown_timezone() {
             fi
             
             # Set moment.js format with timezone abbreviation
-            /init/weewx_config_api.py set-value "[StdReport][Belchertown][Labels][Generic]" "time_last_updated" "LL, LTS z"
+            /init/weewx_config_api.py set-value "[StdReport][Belchertown][Labels][Generic]" "time_last_updated" "LL, LTS z" --force-quotes
             
             log_success "Belchertown timezone configuration completed:"
             log_info "  - timezone: $WEEWX_TIMEZONE"

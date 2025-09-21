@@ -89,15 +89,21 @@ class WeewxConfigManager:
             return default
         return section.get(key, default)
     
-    def set_value(self, section_path, key, value):
+    def set_value(self, section_path, key, value, force_quotes=False):
         """Set a configuration value, handling comma-separated values as lists for WeeWX compatibility"""
         section = self.navigate_to_section(section_path, create_missing=True)
         
-        # Convert comma-separated values to lists for WeeWX compatibility
-        # This prevents ConfigObj from adding quotes around comma-containing values
         value_str = str(value)
-        if ',' in value_str:
-            # Split on comma and strip whitespace from each part
+        
+        if force_quotes:
+            # Force quotes around the value for cases like moment.js format strings
+            if not (value_str.startswith('"') and value_str.endswith('"')):
+                section[key] = f'"{value_str}"'
+            else:
+                section[key] = value_str
+        elif ',' in value_str:
+            # Convert comma-separated values to lists for WeeWX compatibility
+            # This prevents ConfigObj from adding quotes around comma-containing values
             value_list = [part.strip() for part in value_str.split(',')]
             section[key] = value_list
         else:
@@ -138,7 +144,7 @@ class WeewxConfigManager:
         return False
     
     # Bulk Operations
-    def set_multiple_values(self, section_path, key_value_pairs):
+    def set_multiple_values(self, section_path, key_value_pairs, force_quotes=False):
         """Set multiple key=value pairs in a section"""
         section = self.navigate_to_section(section_path, create_missing=True)
         
@@ -147,10 +153,17 @@ class WeewxConfigManager:
                 raise ValueError(f"Invalid key=value pair: {pair}")
             key, value = pair.split('=', 1)
             
-            # Use the same comma-handling logic as set_value
+            # Use the same logic as set_value
             key = key.strip()
             value = value.strip()
-            if ',' in value:
+            
+            if force_quotes:
+                # Force quotes around the value for cases like moment.js format strings
+                if not (value.startswith('"') and value.endswith('"')):
+                    section[key] = f'"{value}"'
+                else:
+                    section[key] = value
+            elif ',' in value:
                 # Split on comma and strip whitespace from each part
                 value_list = [part.strip() for part in value.split(',')]
                 section[key] = value_list
@@ -273,6 +286,8 @@ Examples:
     set_parser.add_argument('section', help='Section path')
     set_parser.add_argument('key', help='Configuration key name')
     set_parser.add_argument('value', help='Value to set')
+    set_parser.add_argument('--force-quotes', action='store_true', 
+                           help='Force quotes around the value (useful for format strings)')
     
     # has-section command
     has_section_parser = subparsers.add_parser('has-section', help='Check if section exists')
@@ -295,6 +310,8 @@ Examples:
     multi_parser = subparsers.add_parser('set-multiple-values', help='Set multiple values at once')
     multi_parser.add_argument('section', help='Section path')
     multi_parser.add_argument('pairs', nargs='+', help='Key=value pairs')
+    multi_parser.add_argument('--force-quotes', action='store_true', 
+                             help='Force quotes around values (useful for format strings)')
     
     # merge-config-from-file command
     merge_file_parser = subparsers.add_parser('merge-config-from-file', help='Merge config from file')
@@ -333,7 +350,8 @@ Examples:
                 return 1
                 
         elif args.command == 'set-value':
-            config_mgr.set_value(args.section, args.key, args.value)
+            force_quotes = getattr(args, 'force_quotes', False)
+            config_mgr.set_value(args.section, args.key, args.value, force_quotes=force_quotes)
             if not args.quiet:
                 print(f"Set {args.section}[{args.key}] = {args.value}")
                 
@@ -363,7 +381,8 @@ Examples:
                     print(f"Section {args.section} not found")
                     
         elif args.command == 'set-multiple-values':
-            config_mgr.set_multiple_values(args.section, args.pairs)
+            force_quotes = getattr(args, 'force_quotes', False)
+            config_mgr.set_multiple_values(args.section, args.pairs, force_quotes=force_quotes)
             if not args.quiet:
                 print(f"Set {len(args.pairs)} values in {args.section}")
                 
