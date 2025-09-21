@@ -58,6 +58,7 @@ Data API extension that provides JSON endpoints for the weeWXWeatherApp Android 
 | Variable | Description | Default | Extension |
 |----------|-------------|---------|-----------|
 | `ENABLE_GW1000_DRIVER` | Enable GW1000 driver installation | `true` | GW1000 |
+| `GW1000_USE_PIEZO_RAIN` | Use piezo rain sensors (WS90/WS85) instead of traditional rain gauge | `false` | GW1000 |
 | `ENABLE_BELCHERTOWN_SKIN` | Enable Belchertown skin installation | `true` | Belchertown |
 | `BELCHERTOWN_VERSION` | Belchertown skin version to install | `1.3.1` | Belchertown |
 | `ENABLE_INIGO_EXTENSION` | Enable Inigo extension installation | `true` | Inigo |
@@ -101,6 +102,16 @@ The GW1000 driver automatically configures sensor mapping and accumulator settin
 - **IP address**: Configured from `GW1000_IP`
 - **Sensor support**: Lightning detection, air quality, soil sensors, battery monitoring
 - **Data collection**: 20-second polling interval for real-time updates
+
+#### Piezo Rain Sensor Support
+
+For weather stations with piezo rain sensors (WS90/WS85), set `GW1000_USE_PIEZO_RAIN=true`:
+
+- **Traditional rain gauges** (default): Uses `t_rain` and `t_rainrate` fields from mechanical rain gauge
+- **Piezo rain sensors**: Maps WeeWX standard `rain` and `rainRate` fields to piezo data (`p_rain`, `p_rainrate`)
+- **Field mapping**: When enabled, piezo rain data appears in standard WeeWX database fields
+- **Skin compatibility**: Works with any WeeWX skin (Belchertown, Seasons, etc.) without modification
+- **Backward compatibility**: Can be toggled between piezo and traditional modes
 
 ### Inigo Extension Configuration
 

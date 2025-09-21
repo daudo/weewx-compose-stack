@@ -55,15 +55,16 @@ configure_station_driver() {
     fi
 }
 
+
 # Configure accumulator settings for GW1000 sensors
 configure_gw1000_accumulators() {
     log_info "Configuring GW1000 sensor accumulators..."
     
-    # Add/update accumulator configuration for GW1000 sensors
+    # Create base accumulator config for traditional sensors
     if ! /init/weewx_config_api.py has-key "[Accumulator]" "daymaxwind"; then
-        log_info "Adding GW1000 accumulator configuration..."
+        log_info "Adding GW1000 base accumulator configuration..."
         
-        # Create temporary file with accumulator config for bulk merge
+        # Create temporary file with base accumulator config
         cat > /tmp/gw1000_accum.conf << 'EOF'
 [Accumulator]
 [[daymaxwind]]
@@ -100,18 +101,48 @@ configure_gw1000_accumulators() {
     extractor = last
 EOF
         
-        # Merge accumulator config using generic API
+        # Merge base accumulator config using generic API
         /init/weewx_config_api.py merge-config-from-file "/tmp/gw1000_accum.conf" "[Accumulator]"
         rm -f /tmp/gw1000_accum.conf
-        log_success "GW1000 accumulator configuration added"
+        log_success "GW1000 base accumulator configuration added"
     else
-        log_info "GW1000 accumulator configuration already exists, skipping"
+        log_info "GW1000 base accumulator configuration already exists"
+    fi
+    
+    # Always add piezo rain accumulators for GW1000 stations
+    # These are needed for piezo rain field processing regardless of field mapping
+    if ! /init/weewx_config_api.py has-key "[Accumulator]" "p_rain"; then
+        log_info "Adding piezo rain accumulator configuration..."
+        
+        # Create temporary file with piezo rain accumulator config
+        cat > /tmp/piezo_accum.conf << 'EOF'
+[Accumulator]
+[[p_rain]]
+    extractor = sum
+[[p_stormRain]]
+    extractor = last
+[[p_dayRain]]
+    extractor = last
+[[p_weekRain]]
+    extractor = last
+[[p_monthRain]]
+    extractor = last
+[[p_yearRain]]
+    extractor = last
+EOF
+        
+        # Merge piezo accumulator config
+        /init/weewx_config_api.py merge-config-from-file "/tmp/piezo_accum.conf" "[Accumulator]"
+        rm -f /tmp/piezo_accum.conf
+        log_success "Piezo rain accumulator configuration added"
+    else
+        log_info "Piezo rain accumulator configuration already exists"
     fi
 }
 
 # Apply all configuration
 configure_gw1000_driver
-configure_station_driver  
+configure_station_driver
 configure_gw1000_accumulators
 
 log_success "GW1000 driver configuration phase completed"
