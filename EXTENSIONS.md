@@ -44,6 +44,7 @@ Data API extension that provides JSON endpoints for the weeWXWeatherApp Android 
 | `WEEWX_WEEK_START` | First day of week (0=Mon, 6=Sun) | `0` | No |
 | `WEEWX_UNIT_SYSTEM` | Unit system for web interface | `metric` | No |
 | `WEEWX_LANGUAGE` | Language code for interface | `en` | No |
+| `WEEWX_TIMEZONE` | Timezone for display in skins (IANA format) | _(system default)_ | No |
 | `WEEWX_SKIN` | Default WeeWX skin selection | `Belchertown` | No |
 
 ### Infrastructure Configuration
@@ -84,6 +85,22 @@ Supported language codes: `en` (English), `de` (German), `fr` (French), `es` (Sp
 
 **Note**: Language support varies by skin. Belchertown includes translation files for all supported languages.
 
+### Timezone Support
+
+Configure timezone display using the `WEEWX_TIMEZONE` environment variable:
+
+- **Format**: IANA timezone format (e.g., `Europe/Berlin`, `America/New_York`)
+- **Effect**: Sets timezone for Belchertown skin display and includes timezone abbreviation in timestamps
+- **Example**: Setting `WEEWX_TIMEZONE=Europe/Berlin` displays times as "21. September 2025, 16:45:00 CEST"
+- **Default**: Uses system timezone when not specified
+
+Common European timezones:
+- `Europe/Berlin` - Germany (CEST/CET)
+- `Europe/Paris` - France (CEST/CET)  
+- `Europe/Zurich` - Switzerland (CEST/CET)
+- `Europe/Vienna` - Austria (CEST/CET)
+- `Europe/Rome` - Italy (CEST/CET)
+
 ## Extension Details
 
 ### Belchertown Configuration
@@ -94,6 +111,7 @@ The Belchertown skin automatically configures itself based on the core WeeWX env
 - **Manifest settings**: Generates progressive web app configuration
 - **Labels and footer**: Customized with station information
 - **Language**: Respects `WEEWX_LANGUAGE` setting
+- **Timezone**: Configures display timezone and moment.js formats with `WEEWX_TIMEZONE`
 
 ### GW1000 Driver Configuration
 

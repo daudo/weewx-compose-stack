@@ -26,6 +26,7 @@ services:
       - WEEWX_WEEK_START=${WEEWX_WEEK_START:-0}
       - WEEWX_UNIT_SYSTEM=${WEEWX_UNIT_SYSTEM:-metric}
       - WEEWX_LANGUAGE=${WEEWX_LANGUAGE:-en}
+      - WEEWX_TIMEZONE=${WEEWX_TIMEZONE:-}
       # Extension configuration
       - ENABLE_GW1000_DRIVER=${ENABLE_GW1000_DRIVER:-true}
       - GW1000_IP=${GW1000_IP:-192.168.1.10}

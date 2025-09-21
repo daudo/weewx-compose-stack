@@ -10,6 +10,7 @@ __pycache__
 *.egg-info
 venv
 failures/
+failing/
 
 ## VS Code ##
 .vscode

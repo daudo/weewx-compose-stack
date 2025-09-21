@@ -108,10 +108,51 @@ configure_belchertown_locale() {
     fi
 }
 
+# Configure Belchertown timezone and moment.js format
+configure_belchertown_timezone() {
+    if [ -f "/data/weewx.conf" ] && [ -n "$WEEWX_TIMEZONE" ]; then
+        log_info "Configuring Belchertown timezone: $WEEWX_TIMEZONE"
+        
+        # Set timezone in Units section
+        if /init/weewx_config_api.py has-section "[StdReport][Belchertown]"; then
+            # Create Units and TimeZone sections if they don't exist
+            if ! /init/weewx_config_api.py has-section "[StdReport][Belchertown][Units]"; then
+                /init/weewx_config_api.py create-section "[StdReport][Belchertown][Units]"
+            fi
+            if ! /init/weewx_config_api.py has-section "[StdReport][Belchertown][Units][TimeZone]"; then
+                /init/weewx_config_api.py create-section "[StdReport][Belchertown][Units][TimeZone]"
+            fi
+            
+            # Set timezone
+            /init/weewx_config_api.py set-value "[StdReport][Belchertown][Units][TimeZone]" "time_zone" "$WEEWX_TIMEZONE"
+            
+            # Update moment.js format to include timezone abbreviation
+            if ! /init/weewx_config_api.py has-section "[StdReport][Belchertown][Labels]"; then
+                /init/weewx_config_api.py create-section "[StdReport][Belchertown][Labels]"
+            fi
+            if ! /init/weewx_config_api.py has-section "[StdReport][Belchertown][Labels][Generic]"; then
+                /init/weewx_config_api.py create-section "[StdReport][Belchertown][Labels][Generic]"
+            fi
+            
+            # Set moment.js format with timezone abbreviation
+            /init/weewx_config_api.py set-value "[StdReport][Belchertown][Labels][Generic]" "time_last_updated" "LL, LTS z"
+            
+            log_success "Belchertown timezone configuration completed:"
+            log_info "  - timezone: $WEEWX_TIMEZONE"
+            log_info "  - time_last_updated format: LL, LTS z (includes timezone abbreviation)"
+        else
+            echo "Warning: [[Belchertown]] section not found, skipping timezone configuration"
+        fi
+    elif [ -z "$WEEWX_TIMEZONE" ]; then
+        log_info "WEEWX_TIMEZONE not set, using system default timezone"
+    fi
+}
+
 # Apply all configurations
 configure_default_skin
 configure_belchertown_options
 configure_belchertown_locale
+configure_belchertown_timezone
 
 # Validate final configuration
 log_info "Validating final configuration..."
