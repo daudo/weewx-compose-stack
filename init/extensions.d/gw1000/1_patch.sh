@@ -35,7 +35,6 @@ patch_piezo_rain_mapping() {
         log_success "Piezo rain field mapping patch applied"
         log_info "  - Standard 'rain' field now mapped to piezo 'p_rain'"
         log_info "  - Standard 'rainRate' field now mapped to piezo 'p_rainrate'"
-        log_info "  - All other sensors (temperature, pressure, etc.) remain functional"
     else
         log_info "Piezo rain patch disabled (GW1000_USE_PIEZO_RAIN=false)"
         
